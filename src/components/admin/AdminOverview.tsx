@@ -49,37 +49,36 @@ export default function AdminOverview() {
           productsCountPromise,
           revenuePromise,
         ] = await Promise.all([
-          // 1. Get delivered orders with items from order_items
+          // 1. Get delivered orders with items (limited to 10)
           supabase
-            .from('order_items')
+            .from('orders')
             .select(`
               id,
-              quantity,
-              price,
-              size,
-              product_id,
-              order_id,
-              products!inner (
+              order_number,
+              total_amount,
+              status,
+              created_at,
+              user_id,
+              order_items!inner (
                 id,
-                name,
+                quantity,
                 price,
-                image_urls,
-                sizes
-              ),
-              orders!inner (
-                id,
-                order_number,
-                total_amount,
-                status,
-                created_at,
-                user_id
+                size,
+                product_id,
+                products!inner (
+                  id,
+                  name,
+                  price,
+                  image_urls,
+                  sizes
+                )
               )
             `)
-            .eq('orders.status', 'delivered')
-            .order('orders.created_at', { ascending: false })
+            .eq('status', 'delivered')
+            .order('created_at', { ascending: false })
             .limit(10),
 
-          // 2. Get total delivered count from orders
+          // 2. Get total delivered count
           supabase
             .from('orders')
             .select('id', { count: 'exact', head: true })
@@ -96,7 +95,7 @@ export default function AdminOverview() {
             .from('products')
             .select('id', { count: 'exact', head: true }),
 
-          // 5. Get total revenue from orders
+          // 5. Get total revenue (only total_amount, not all fields)
           supabase
             .from('orders')
             .select('total_amount')
@@ -112,7 +111,7 @@ export default function AdminOverview() {
         }
 
         // Get the data from all promises
-        const orderItemsData = deliveredOrdersPromise.data || [];
+        const deliveredData = deliveredOrdersPromise.data || [];
         const deliveredCount = deliveredCountPromise.count || 0;
         const customersCount = customersCountPromise.count || 0;
         const productsCount = productsCountPromise.count || 0;
@@ -121,28 +120,13 @@ export default function AdminOverview() {
         // Calculate total revenue
         const totalRevenue = revenueData.reduce((sum: number, o: any) => sum + (o.total_amount ?? 0), 0);
 
-        // Group order items by order_id
-        const ordersMap = new Map();
-        orderItemsData.forEach((item: any) => {
-          const orderId = item.order_id;
-          if (!ordersMap.has(orderId)) {
-            ordersMap.set(orderId, {
-              ...item.orders,
-              items: [],
-            });
-          }
-          ordersMap.get(orderId).items.push(item);
-        });
-
-        // Get unique order objects
-        const uniqueOrders = Array.from(ordersMap.values());
-
-        // Fetch user details for delivered orders
+        // Fetch user details for delivered orders (only if there are orders)
         let usersMap: Record<string, any> = {};
-        if (uniqueOrders.length > 0) {
-          const userIds = uniqueOrders.map((o: any) => o.user_id).filter(Boolean);
+        if (deliveredData.length > 0) {
+          const userIds = deliveredData.map((o: any) => o.user_id).filter(Boolean);
           
           if (userIds.length > 0) {
+            // Use a more efficient query with select
             const { data: usersData } = await supabase
               .from('users')
               .select('id, full_name, email')
@@ -153,17 +137,14 @@ export default function AdminOverview() {
         }
 
         // Process delivered orders data
-        const deliveredWithUsers = uniqueOrders.map((order: any) => {
-          const orderItems = order.items || [];
-          
-          // Calculate subtotal from order items
+        const deliveredWithUsers = deliveredData.map((o: any) => {
+          const orderItems = o.order_items || [];
           const subtotal = orderItems.reduce((sum: number, item: any) => {
             return sum + (item.price * item.quantity);
           }, 0);
           
-          const deliveryCharge = Math.max(0, (order.total_amount || 0) - subtotal);
+          const deliveryCharge = Math.max(0, (o.total_amount || 0) - subtotal);
           
-          // Get first item for product info
           const firstItem = orderItems[0];
           const product = firstItem?.products || {};
           const productName = product?.name || null;
@@ -171,20 +152,16 @@ export default function AdminOverview() {
           const productSize = firstItem?.size || null;
           
           return {
-            ...order,
-            order_number: order.order_number,
-            created_at: order.created_at,
-            status: order.status,
-            total_amount: order.total_amount,
-            userName: usersMap[order.user_id]?.full_name ?? usersMap[order.user_id]?.email ?? '—',
-            userEmail: usersMap[order.user_id]?.email ?? '—',
+            ...o,
+            userName: usersMap[o.user_id]?.full_name ?? usersMap[o.user_id]?.email ?? '—',
+            userEmail: usersMap[o.user_id]?.email ?? '—',
             product_name: productName,
             product_image: productImage,
             product_size: productSize,
+            order_number: o.order_number,
             subtotal: subtotal,
             delivery_charge: deliveryCharge,
             total_quantity: orderItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
-            items: orderItems,
           };
         });
 
