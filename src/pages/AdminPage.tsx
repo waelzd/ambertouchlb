@@ -18,8 +18,6 @@ import {
   XCircle,
   X,
   Mail,
-  Phone,
-  MapPin,
   Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -142,55 +140,53 @@ export default function AdminPage() {
   };
 
   // Fetch order details with items
-  const fetchOrderDetails = async (orderId: string) => {
-    setLoadingDetails(true);
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
+const fetchOrderDetails = async (orderId: string) => {
+  setLoadingDetails(true);
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        total_amount,
+        status,
+        created_at,
+        user_id,
+        users (
+          full_name,
+          email
+        ),
+        order_items (
           id,
-          order_number,
-          total_amount,
-          status,
-          created_at,
-          user_id,
-          users (
-            full_name,
-            email,
-            phone,
-            address
-          ),
-          order_items (
+          quantity,
+          price,
+          size,
+          product_id,
+          products (
             id,
-            quantity,
+            name,
             price,
-            size,
-            product_id,
-            products (
-              id,
-              name,
-              price,
-              image_urls,
-              sizes
-            )
+            image_urls,
+            sizes
           )
-        `)
-        .eq('id', orderId)
-        .single();
+        )
+      `)
+      .eq('id', orderId)
+      .single();
 
-      if (error) {
-        console.error('Error fetching order details:', error);
-        return;
-      }
-
-      setOrderDetails(data);
-      setModalOpen(true);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoadingDetails(false);
+    if (error) {
+      console.error('Error fetching order details:', error);
+      return;
     }
-  };
+
+    setOrderDetails(data);
+    setModalOpen(true);
+  } catch (error) {
+    console.error('Error:', error);
+  } finally {
+    setLoadingDetails(false);
+  }
+};
 
   const handleOrderClick = (order: any) => {
     setSelectedOrder(order);
@@ -559,31 +555,20 @@ export default function AdminPage() {
                   </div>
 
                   {/* Customer Info */}
-                  <div className="bg-neutral-50 rounded-xl p-4 mb-6">
-                    <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Customer Information</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="flex items-center gap-2">
-                        <User size={14} className="text-neutral-400" />
-                        <span className="text-sm text-neutral-700">{orderDetails.users?.full_name || 'Unknown'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail size={14} className="text-neutral-400" />
-                        <span className="text-sm text-neutral-700">{orderDetails.users?.email || 'No email'}</span>
-                      </div>
-                      {orderDetails.users?.phone && (
-                        <div className="flex items-center gap-2">
-                          <Phone size={14} className="text-neutral-400" />
-                          <span className="text-sm text-neutral-700">{orderDetails.users.phone}</span>
-                        </div>
-                      )}
-                      {orderDetails.users?.address && (
-                        <div className="flex items-center gap-2">
-                          <MapPin size={14} className="text-neutral-400" />
-                          <span className="text-sm text-neutral-700">{orderDetails.users.address}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+<div className="bg-neutral-50 rounded-xl p-4 mb-6">
+  <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Customer Information</h4>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="flex items-center gap-2">
+      <User size={14} className="text-neutral-400" />
+      <span className="text-sm text-neutral-700">{orderDetails.users?.full_name || 'Unknown'}</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <Mail size={14} className="text-neutral-400" />
+      <span className="text-sm text-neutral-700">{orderDetails.users?.email || 'No email'}</span>
+    </div>
+    {/* Remove phone and address since they don't exist in the users table */}
+  </div>
+</div>
 
                   {/* Order Items */}
                   <div className="mb-6">
