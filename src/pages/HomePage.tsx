@@ -195,7 +195,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      <ScrollToTop />
       {/* Popup Modal - Only shown for customers who haven't used the discount */}
       {!isCheckingUser && 
        !(authUser && (hasUsedDiscount || userRole === 'admin')) && 
@@ -564,6 +563,7 @@ export default function HomePage() {
       >
         <img src={whatsappLogo} alt="WhatsApp" width="26" height="26" />
       </a>
+      <ScrollToTop />
     </div>
   );
 }
