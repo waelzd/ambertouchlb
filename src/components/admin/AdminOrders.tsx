@@ -537,7 +537,7 @@ export default function AdminOrders() {
                               className={`p-2 rounded-lg transition-all duration-200 ${
                                 canDelete 
                                   ? 'text-red-600 hover:text-red-600 hover:bg-red-50' 
-                                  : 'text-red-50 cursor-not-allowed'
+                                  : 'text-red-300 cursor-not-allowed'
                               }`}
                               title={canDelete ? 'Delete order' : 'Only cancelled or delivered orders can be deleted'}
                               disabled={!canDelete}

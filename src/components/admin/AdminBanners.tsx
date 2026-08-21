@@ -262,13 +262,13 @@ export default function AdminBanners() {
                     onClick={() => openEdit(banner)}
                     className="p-3 bg-white rounded-full hover:bg-white hover:scale-110 transition-all duration-200 shadow-lg"
                   >
-                    <Edit2 size={18} className="text-neutral-700" />
+                    <Edit2 size={18} className="text-blue-600" />
                   </button>
                   <button
                     onClick={() => setDeleteId(banner.id)}
                     className="p-3 bg-white rounded-full hover:bg-white hover:scale-110 transition-all duration-200 shadow-lg"
                   >
-                    <Trash2 size={18} className="text-red-500" />
+                    <Trash2 size={18} className="text-red-600" />
                   </button>
                 </div>
               </div>
