@@ -37,7 +37,7 @@ export default function ScrollToTopButton() {
           className="fixed bottom-24 right-6 z-40 p-3 bg-gold-400 text-neutral-900 rounded-full shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 shadow-gold-400/30 hover:shadow-gold-400/50"
           aria-label="Scroll to top"
         >
-          <ArrowUp size={24} />
+          <ArrowUp size={24} width="26" height="26" />
         </motion.button>
       )}
     </AnimatePresence>
