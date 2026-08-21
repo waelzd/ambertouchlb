@@ -49,7 +49,7 @@ export default function AdminOverview() {
           productsCountPromise,
           revenuePromise,
         ] = await Promise.all([
-          // 1. Get delivered orders with items (limited to 10)
+          // 1. Get delivered orders - without joining users
           supabase
             .from('orders')
             .select(`
@@ -58,21 +58,7 @@ export default function AdminOverview() {
               total_amount,
               status,
               created_at,
-              user_id,
-              order_items!inner (
-                id,
-                quantity,
-                price,
-                size,
-                product_id,
-                products!inner (
-                  id,
-                  name,
-                  price,
-                  image_urls,
-                  sizes
-                )
-              )
+              user_id
             `)
             .eq('status', 'delivered')
             .order('created_at', { ascending: false })
@@ -95,7 +81,7 @@ export default function AdminOverview() {
             .from('products')
             .select('id', { count: 'exact', head: true }),
 
-          // 5. Get total revenue (only total_amount, not all fields)
+          // 5. Get total revenue
           supabase
             .from('orders')
             .select('total_amount')
@@ -120,13 +106,12 @@ export default function AdminOverview() {
         // Calculate total revenue
         const totalRevenue = revenueData.reduce((sum: number, o: any) => sum + (o.total_amount ?? 0), 0);
 
-        // Fetch user details for delivered orders (only if there are orders)
+        // Fetch user details separately for delivered orders
         let usersMap: Record<string, any> = {};
         if (deliveredData.length > 0) {
           const userIds = deliveredData.map((o: any) => o.user_id).filter(Boolean);
           
           if (userIds.length > 0) {
-            // Use a more efficient query with select
             const { data: usersData } = await supabase
               .from('users')
               .select('id, full_name, email')
@@ -136,15 +121,53 @@ export default function AdminOverview() {
           }
         }
 
-        // Process delivered orders data
-        const deliveredWithUsers = deliveredData.map((o: any) => {
-          const orderItems = o.order_items || [];
+        // Now fetch order items for each delivered order
+        const orderIds = deliveredData.map((o: any) => o.id).filter(Boolean);
+        let orderItemsMap: Record<string, any[]> = {};
+        
+        if (orderIds.length > 0) {
+          const { data: orderItemsData } = await supabase
+            .from('order_items')
+            .select(`
+              id,
+              quantity,
+              price,
+              size,
+              product_id,
+              order_id,
+              products (
+                id,
+                name,
+                price,
+                image_urls,
+                sizes
+              )
+            `)
+            .in('order_id', orderIds);
+
+          // Group order items by order_id
+          orderItemsMap = (orderItemsData || []).reduce((acc: Record<string, any[]>, item: any) => {
+            const orderId = item.order_id;
+            if (!acc[orderId]) {
+              acc[orderId] = [];
+            }
+            acc[orderId].push(item);
+            return acc;
+          }, {});
+        }
+
+        // Process delivered orders data with items and users
+        const deliveredWithDetails = deliveredData.map((order: any) => {
+          const orderItems = orderItemsMap[order.id] || [];
+          
+          // Calculate subtotal from order items
           const subtotal = orderItems.reduce((sum: number, item: any) => {
             return sum + (item.price * item.quantity);
           }, 0);
           
-          const deliveryCharge = Math.max(0, (o.total_amount || 0) - subtotal);
+          const deliveryCharge = Math.max(0, (order.total_amount || 0) - subtotal);
           
+          // Get first item for product info
           const firstItem = orderItems[0];
           const product = firstItem?.products || {};
           const productName = product?.name || null;
@@ -152,16 +175,16 @@ export default function AdminOverview() {
           const productSize = firstItem?.size || null;
           
           return {
-            ...o,
-            userName: usersMap[o.user_id]?.full_name ?? usersMap[o.user_id]?.email ?? '—',
-            userEmail: usersMap[o.user_id]?.email ?? '—',
+            ...order,
+            userName: usersMap[order.user_id]?.full_name ?? usersMap[order.user_id]?.email ?? '—',
+            userEmail: usersMap[order.user_id]?.email ?? '—',
             product_name: productName,
             product_image: productImage,
             product_size: productSize,
-            order_number: o.order_number,
             subtotal: subtotal,
             delivery_charge: deliveryCharge,
             total_quantity: orderItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
+            items: orderItems,
           };
         });
 
@@ -172,7 +195,7 @@ export default function AdminOverview() {
           products: productsCount,
         });
         
-        setDeliveredOrders(deliveredWithUsers);
+        setDeliveredOrders(deliveredWithDetails);
         setLoading(false);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -184,7 +207,7 @@ export default function AdminOverview() {
     load();
   }, []);
 
-  // Rest of the component remains the same...
+  // Formatting functions
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
@@ -277,7 +300,7 @@ export default function AdminOverview() {
         </div>
       </div>
 
-      {/* Stats Cards - Clean & Simple */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map(({ label, value, icon: Icon, bg, border, text, iconBg }) => (
           <motion.div 
