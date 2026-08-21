@@ -39,15 +39,32 @@ const NAV_ITEMS = [
 const ORDER_STATUS_ICONS = {
   pending: Clock,
   processing: Clock,
-  completed: CheckCircle,
+  delivered: CheckCircle,
+  shipped: CheckCircle,
   cancelled: XCircle,
 };
 
 const ORDER_STATUS_COLORS = {
   pending: 'text-yellow-600 bg-yellow-50',
   processing: 'text-blue-600 bg-blue-50',
-  completed: 'text-green-600 bg-green-50',
+  shipped: 'text-indigo-600 bg-indigo-50',
+  delivered: 'text-green-600 bg-green-50',
   cancelled: 'text-red-600 bg-red-50',
+};
+
+// Format order number to #ORD-2026-XXXX
+const formatOrderNumber = (orderNumber: string) => {
+  if (!orderNumber) return '#ORD-2026-0000';
+  
+  // If order number already has the format #ORD-2026-XXXX, return as is
+  if (orderNumber.startsWith('#ORD-')) {
+    return orderNumber;
+  }
+  
+  // If order number is just a number or UUID, format it
+  const year = new Date().getFullYear();
+  const shortId = orderNumber.slice(0, 4).toUpperCase();
+  return `#ORD-${year}-${shortId}`;
 };
 
 export default function AdminPage() {
@@ -153,6 +170,11 @@ export default function AdminPage() {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     return `${diffDays}d ago`;
+  };
+
+  const formatCurrency = (amount: number) => {
+    if (!amount && amount !== 0) return '$0.00';
+    return `$${amount.toFixed(2)}`;
   };
 
   return (
@@ -281,6 +303,7 @@ export default function AdminPage() {
                       orders.map((order) => {
                         const StatusIcon = ORDER_STATUS_ICONS[order.status as keyof typeof ORDER_STATUS_ICONS] || Clock;
                         const statusColor = ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS] || 'text-neutral-600 bg-neutral-50';
+                        const orderNumber = formatOrderNumber(order.order_number || order.id);
                         
                         return (
                           <Link
@@ -294,10 +317,10 @@ export default function AdminPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-neutral-900">
-                                Order #{order.id.slice(0, 8)}
+                                {orderNumber}
                               </p>
                               <p className="text-xs text-neutral-500 truncate">
-                                {order.users?.full_name || 'Unknown'} • ${order.total?.toFixed(2) || '0.00'}
+                                {order.users?.full_name || 'Unknown'} • {formatCurrency(order.total_amount || order.total || 0)}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
