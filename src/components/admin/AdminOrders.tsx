@@ -424,7 +424,7 @@ export default function AdminOrders() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-neutral-600">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-gold-50 text-gold-700 text-xs font-medium border border-gold-200">
                           {size || '—'}
                         </span>
                       </td>
