@@ -329,7 +329,7 @@ export default function AdminCategories() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-neutral-500 hidden sm:table-cell">
-                      <span className="font-mono text-xs bg-neutral-100 px-2 py-1 rounded">
+                      <span className="font-mono inline-flex items-center px-2.5 py-1 rounded-md bg-gold-50 text-gold-700 text-xs font-medium border border-gold-200">
                         {category.slug}
                       </span>
                     </td>
