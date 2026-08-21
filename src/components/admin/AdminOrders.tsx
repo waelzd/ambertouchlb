@@ -14,7 +14,10 @@ import {
   User,
   Calendar,
   ShoppingBag,
-  Eye
+  Eye,
+  MapPin,
+  Mail,
+  Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -152,6 +155,7 @@ export default function AdminOrders() {
         subtotal: subtotal,
         delivery_charge: deliveryCharge,
         order_number: o.order_number,
+        shipping_address: o.shipping_address,
       };
     });
 
@@ -352,7 +356,7 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* Orders Table */}
+      {/* Orders Table - Matching the image design */}
       <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -395,108 +399,229 @@ export default function AdminOrders() {
                   const badgeColor = getStatusBadgeColor(order.status);
                   const dotColor = getStatusDotColor(order.status);
                   const size = order.first_item?.size || null;
+                  const isExpanded = expandedId === order.id;
                   
                   return (
-                    <motion.tr
-                      key={order.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors duration-200 group"
-                    >
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-mono font-semibold text-neutral-700">
-                          #{order.order_number}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 bg-neutral-100 rounded-lg overflow-hidden shrink-0">
-                            {order.first_item?.products?.image_urls?.[0] ? (
-                              <img 
-                                src={order.first_item.products.image_urls[0]} 
-                                alt={order.product_name || ''}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Package size={16} className="text-neutral-400" />
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-sm text-neutral-700 truncate max-w-[120px]">
-                            {order.product_name || '—'}
+                    <>
+                      <motion.tr
+                        key={order.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.03 }}
+                        className={`border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors duration-200 group cursor-pointer ${isExpanded ? 'bg-neutral-50/50' : ''}`}
+                        onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                      >
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-mono font-semibold text-neutral-700">
+                            #{order.order_number}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-neutral-600">
-                          {size || '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        <span className="text-sm text-neutral-600">
-                          {formatDate(order.created_at)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-neutral-600">
-                          {order.total_quantity || 0}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <select
-                          value={order.status}
-                          onChange={e => { 
-                            e.stopPropagation(); 
-                            updateStatus(order.id, e.target.value as OrderStatus); 
-                          }}
-                          disabled={updatingId === order.id}
-                          className={`text-xs font-medium px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all ${badgeColor}`}
-                        >
-                          {STATUS_OPTIONS.map(s => (
-                            <option key={s} value={s}>
-                              {STATUS_LABELS[s]}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="text-sm font-semibold text-neutral-900">
-                          ${order.total_amount?.toFixed(2) || '0.00'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => openOrderDetails(order)}
-                            className="p-1.5 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                            title="View order details"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (canDelete) {
-                                setDeleteId(order.id);
-                              } else {
-                                alert('Only cancelled or delivered orders can be deleted.');
-                              }
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 bg-neutral-100 rounded-lg overflow-hidden shrink-0">
+                              {order.first_item?.products?.image_urls?.[0] ? (
+                                <img 
+                                  src={order.first_item.products.image_urls[0]} 
+                                  alt={order.product_name || ''}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package size={16} className="text-neutral-400" />
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-sm text-neutral-700 truncate max-w-[120px]">
+                              {order.product_name || '—'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-neutral-600">
+                            {size || '—'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <span className="text-sm text-neutral-600">
+                            {formatDate(order.created_at)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-neutral-600">
+                            {order.total_quantity || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={order.status}
+                            onChange={e => { 
+                              e.stopPropagation(); 
+                              updateStatus(order.id, e.target.value as OrderStatus); 
                             }}
-                            className={`p-1.5 rounded-lg transition-all duration-200 ${
-                              canDelete 
-                                ? 'text-red-400 hover:text-red-600 hover:bg-red-50' 
-                                : 'text-red-200 cursor-not-allowed'
-                            }`}
-                            title={canDelete ? 'Delete order' : 'Only cancelled or delivered orders can be deleted'}
-                            disabled={!canDelete}
+                            disabled={updatingId === order.id}
+                            className={`text-xs font-medium px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all ${badgeColor}`}
                           >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
+                            {STATUS_OPTIONS.map(s => (
+                              <option key={s} value={s}>
+                                {STATUS_LABELS[s]}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-sm font-semibold text-neutral-900">
+                            ${order.total_amount?.toFixed(2) || '0.00'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openOrderDetails(order);
+                              }}
+                              className="p-1.5 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                              title="View order details"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (canDelete) {
+                                  setDeleteId(order.id);
+                                } else {
+                                  alert('Only cancelled or delivered orders can be deleted.');
+                                }
+                              }}
+                              className={`p-1.5 rounded-lg transition-all duration-200 ${
+                                canDelete 
+                                  ? 'text-red-400 hover:text-red-600 hover:bg-red-50' 
+                                  : 'text-red-200 cursor-not-allowed'
+                              }`}
+                              title={canDelete ? 'Delete order' : 'Only cancelled or delivered orders can be deleted'}
+                              disabled={!canDelete}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedId(isExpanded ? null : order.id);
+                              }}
+                              className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-all duration-200"
+                              title={isExpanded ? 'Collapse details' : 'Expand details'}
+                            >
+                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+
+                      {/* Expanded Row - Shows Shipping Address */}
+                      {isExpanded && (
+                        <tr key={`${order.id}-details`}>
+                          <td colSpan={8} className="px-4 py-4 bg-neutral-50/80">
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="grid md:grid-cols-2 gap-4"
+                            >
+                              {/* Shipping Address */}
+                              {order.shipping_address && (
+                                <div>
+                                  <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <MapPin size={14} /> Shipping Address
+                                  </h4>
+                                  <div className="bg-white p-4 rounded-lg border border-neutral-200 space-y-1">
+                                    <p className="text-sm font-medium text-neutral-900">
+                                      {order.shipping_address.full_name || 'N/A'}
+                                    </p>
+                                    {order.shipping_address.phone && (
+                                      <p className="text-sm text-neutral-600 flex items-center gap-2">
+                                        <Phone size={14} className="text-neutral-400" />
+                                        {order.shipping_address.phone}
+                                      </p>
+                                    )}
+                                    {order.shipping_address.email && (
+                                      <p className="text-sm text-neutral-600 flex items-center gap-2">
+                                        <Mail size={14} className="text-neutral-400" />
+                                        {order.shipping_address.email}
+                                      </p>
+                                    )}
+                                    <p className="text-sm text-neutral-600">{order.shipping_address.address_line1}</p>
+                                    {order.shipping_address.address_line2 && (
+                                      <p className="text-sm text-neutral-600">{order.shipping_address.address_line2}</p>
+                                    )}
+                                    <p className="text-sm text-neutral-600">
+                                      {order.shipping_address.city}
+                                      {order.shipping_address.postal_code && `, ${order.shipping_address.postal_code}`}
+                                    </p>
+                                    <p className="text-sm text-neutral-600">{order.shipping_address.country}</p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Order Items Summary */}
+                              <div>
+                                <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                  <Package size={14} /> Order Items
+                                </h4>
+                                <div className="space-y-2">
+                                  {order.order_items?.slice(0, 3).map((item: any) => (
+                                    <div key={item.id} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-neutral-200">
+                                      <div className="w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden shrink-0">
+                                        <img 
+                                          src={item.products?.image_urls?.[0] || ''} 
+                                          alt={item.products?.name || ''}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-neutral-900 truncate">
+                                          {item.products?.name || 'Unknown'}
+                                        </p>
+                                        <div className="flex items-center gap-2 text-xs text-neutral-500">
+                                          <span>×{item.quantity}</span>
+                                          {item.size && <span>• {item.size}</span>}
+                                          <span>• ${item.price.toFixed(2)}</span>
+                                        </div>
+                                      </div>
+                                      <span className="text-sm font-semibold text-neutral-900">
+                                        ${(item.price * item.quantity).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  {(order.order_items?.length || 0) > 3 && (
+                                    <p className="text-xs text-neutral-400 text-center">
+                                      + {(order.order_items?.length || 0) - 3} more items
+                                    </p>
+                                  )}
+                                  
+                                  <div className="bg-white p-3 rounded-lg border border-neutral-200">
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-neutral-500">Subtotal:</span>
+                                      <span className="font-medium">${order.subtotal?.toFixed(2) || '0.00'}</span>
+                                    </div>
+                                    {(order.delivery_charge || 0) > 0 && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-neutral-500">Delivery:</span>
+                                        <span className="font-medium text-blue-600">${order.delivery_charge?.toFixed(2) || '0.00'}</span>
+                                      </div>
+                                    )}
+                                    <div className="flex justify-between text-sm font-bold border-t border-neutral-200 pt-2 mt-2">
+                                      <span>Total:</span>
+                                      <span className="text-gold-600">${order.total_amount?.toFixed(2) || '0.00'}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   );
                 })}
             </tbody>
@@ -539,7 +664,7 @@ export default function AdminOrders() {
               </div>
 
               <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-                {/* Order Status */}
+                {/* Order Status & Customer */}
                 <div className="flex items-center gap-2 mb-4">
                   <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${
                     getStatusBadgeColor(selectedOrder.status)
@@ -552,8 +677,44 @@ export default function AdminOrders() {
                   </span>
                 </div>
 
+                {/* Shipping Address */}
+                {selectedOrder.shipping_address && (
+                  <div className="bg-neutral-50 rounded-xl p-4 mb-4">
+                    <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <MapPin size={14} /> Shipping Address
+                    </h4>
+                    <div className="grid grid-cols-1 gap-1">
+                      <p className="text-sm font-medium text-neutral-900">
+                        {selectedOrder.shipping_address.full_name || 'N/A'}
+                      </p>
+                      {selectedOrder.shipping_address.phone && (
+                        <p className="text-sm text-neutral-600 flex items-center gap-2">
+                          <Phone size={14} className="text-neutral-400" />
+                          {selectedOrder.shipping_address.phone}
+                        </p>
+                      )}
+                      {selectedOrder.shipping_address.email && (
+                        <p className="text-sm text-neutral-600 flex items-center gap-2">
+                          <Mail size={14} className="text-neutral-400" />
+                          {selectedOrder.shipping_address.email}
+                        </p>
+                      )}
+                      <p className="text-sm text-neutral-600">{selectedOrder.shipping_address.address_line1}</p>
+                      {selectedOrder.shipping_address.address_line2 && (
+                        <p className="text-sm text-neutral-600">{selectedOrder.shipping_address.address_line2}</p>
+                      )}
+                      <p className="text-sm text-neutral-600">
+                        {selectedOrder.shipping_address.city}
+                        {selectedOrder.shipping_address.postal_code && `, ${selectedOrder.shipping_address.postal_code}`}
+                      </p>
+                      <p className="text-sm text-neutral-600">{selectedOrder.shipping_address.country}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Order Items */}
                 <div className="space-y-3 mb-4">
+                  <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Order Items</h4>
                   {selectedOrder.order_items?.map((item: any) => (
                     <div key={item.id} className="flex items-center gap-4 p-3 bg-neutral-50 rounded-xl">
                       <div className="w-16 h-16 bg-neutral-200 rounded-lg overflow-hidden shrink-0">
