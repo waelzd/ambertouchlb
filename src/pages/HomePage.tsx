@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import type { Product, Category, Banner } from '../types';
 import ProductCard from '../components/products/ProductCard';
 import { useAuth } from '../context/AuthContext';
+import ScrollToTop from '../components/ScrollToTop';
 
 export default function HomePage() {
   const { authUser } = useAuth();
@@ -194,6 +195,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
+      <ScrollToTop />
       {/* Popup Modal - Only shown for customers who haven't used the discount */}
       {!isCheckingUser && 
        !(authUser && (hasUsedDiscount || userRole === 'admin')) && 
