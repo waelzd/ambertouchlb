@@ -27,10 +27,24 @@ export default function Footer() {
               Luxury perfumes and fragrances for the discerning customer. Explore our curated collection and indulge in the art of scent.
             </p>
             <div className="flex items-center gap-4 mt-6">
-              <a href="https://www.instagram.com/ambertouchlb?igsh=MTUwcDM0Y3FrYnBmdA==&igsi=MTUwcDM0Y3FrYnBmdA==" target="_blank" 
-  rel="noopener noreferrer"className="text-neutral-500 hover:text-gold-400 transition-colors" aria-label="Instagram"><Instagram size={18} /></a>
-              <a href="https://www.facebook.com/ambertouchlb" target="_blank" 
-  rel="noopener noreferrer"className="text-neutral-500 hover:text-gold-400 transition-colors" aria-label="Facebook"><Facebook size={18} /></a>
+              <a 
+                href="https://www.instagram.com/ambertouchlb?igsh=MTUwcDM0Y3FrYnBmdA==&igsi=MTUwcDM0Y3FrYnBmdA==" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-neutral-500 hover:text-gold-400 transition-colors" 
+                aria-label="Instagram"
+              >
+                <Instagram size={18} />
+              </a>
+              <a 
+                href="https://www.facebook.com/ambertouchlb" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-neutral-500 hover:text-gold-400 transition-colors" 
+                aria-label="Facebook"
+              >
+                <Facebook size={18} />
+              </a>
             </div>
           </div>
 
@@ -92,11 +106,21 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={15} className="text-neutral-500 shrink-0" />
-                <span className="text-sm text-neutral-400">+96170702697</span>
+                <a 
+                  href="tel:+96170702697" 
+                  className="text-sm text-neutral-400 hover:text-gold-400 transition-colors"
+                >
+                  +96170702697
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={15} className="text-neutral-500 shrink-0" />
-                <span className="text-sm text-neutral-400 break-all sm:break-normal">ambertouch2026@gmail.com</span>
+                <a 
+                  href="mailto:ambertouch2026@gmail.com" 
+                  className="text-sm text-neutral-400 hover:text-gold-400 transition-colors break-all sm:break-normal"
+                >
+                  ambertouch2026@gmail.com
+                </a>
               </li>
             </ul>
           </div>
