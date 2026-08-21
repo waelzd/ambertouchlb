@@ -52,21 +52,6 @@ const ORDER_STATUS_COLORS = {
   cancelled: 'text-red-600 bg-red-50',
 };
 
-// Format order number to #ORD-2026-XXXX
-const formatOrderNumber = (orderNumber: string) => {
-  if (!orderNumber) return '#ORD-2026-0000';
-  
-  // If order number already has the format #ORD-2026-XXXX, return as is
-  if (orderNumber.startsWith('#ORD-')) {
-    return orderNumber;
-  }
-  
-  // If order number is just a number or UUID, format it
-  const year = new Date().getFullYear();
-  const shortId = orderNumber.slice(0, 4).toUpperCase();
-  return `#ORD-${year}-${shortId}`;
-};
-
 export default function AdminPage() {
   const { profile, loading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -74,7 +59,7 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -83,12 +68,12 @@ export default function AdminPage() {
     }
   }, [profile, loading, navigate]);
 
-  // Load recent orders for notifications
+  // Load pending orders for notifications
   useEffect(() => {
     if (profile?.role === 'admin') {
-      loadRecentOrders();
+      loadPendingOrders();
       
-      // Subscribe to new orders
+      // Subscribe to new orders and updates
       const subscription = supabase
         .channel('orders_notifications')
         .on(
@@ -99,7 +84,18 @@ export default function AdminPage() {
             table: 'orders'
           },
           () => {
-            loadRecentOrders();
+            loadPendingOrders();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders'
+          },
+          () => {
+            loadPendingOrders();
           }
         )
         .subscribe();
@@ -110,15 +106,28 @@ export default function AdminPage() {
     }
   }, [profile]);
 
-  const loadRecentOrders = async () => {
+  const loadPendingOrders = async () => {
+    // Fetch only pending and processing orders
     const { data } = await supabase
       .from('orders')
-      .select('*, users(full_name, email)')
+      .select(`
+        id,
+        order_number,
+        total_amount,
+        status,
+        created_at,
+        user_id,
+        users (
+          full_name,
+          email
+        )
+      `)
+      .in('status', ['pending', 'processing'])
       .order('created_at', { ascending: false })
       .limit(10);
     
-    setOrders(data ?? []);
-    // Count orders with status 'pending' or 'processing' as unread
+    setPendingOrders(data ?? []);
+    // Count only pending and processing orders as unread
     const unread = data?.filter(o => o.status === 'pending' || o.status === 'processing').length || 0;
     setUnreadCount(unread);
   };
@@ -267,7 +276,7 @@ export default function AdminPage() {
           </div>
 
           <div className="ml-auto flex items-center gap-3">
-            {/* Notifications */}
+            {/* Notifications - Only Pending Orders */}
             <div className="relative notifications-dropdown">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
@@ -284,7 +293,14 @@ export default function AdminPage() {
               {notificationsOpen && (
                 <div className="absolute right-0 mt-2 w-80 max-h-[400px] bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden animate-fadeIn">
                   <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-neutral-900">Recent Orders</h3>
+                    <h3 className="text-sm font-semibold text-neutral-900">
+                      Pending Orders
+                      {pendingOrders.length > 0 && (
+                        <span className="ml-2 text-xs font-normal text-neutral-500">
+                          ({pendingOrders.length})
+                        </span>
+                      )}
+                    </h3>
                     <Link 
                       to="/admin/orders" 
                       className="text-xs text-gold-600 hover:text-gold-700 font-medium"
@@ -294,16 +310,17 @@ export default function AdminPage() {
                     </Link>
                   </div>
                   <div className="overflow-y-auto max-h-[340px]">
-                    {orders.length === 0 ? (
+                    {pendingOrders.length === 0 ? (
                       <div className="px-4 py-8 text-center">
-                        <ShoppingBag size={32} className="text-neutral-300 mx-auto mb-2" />
-                        <p className="text-sm text-neutral-500">No orders yet</p>
+                        <CheckCircle size={32} className="text-green-300 mx-auto mb-2" />
+                        <p className="text-sm text-neutral-500">No pending orders</p>
+                        <p className="text-xs text-neutral-400">All orders are processed</p>
                       </div>
                     ) : (
-                      orders.map((order) => {
+                      pendingOrders.map((order) => {
                         const StatusIcon = ORDER_STATUS_ICONS[order.status as keyof typeof ORDER_STATUS_ICONS] || Clock;
                         const statusColor = ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS] || 'text-neutral-600 bg-neutral-50';
-                        const orderNumber = formatOrderNumber(order.order_number || order.id);
+                        const orderNumber = order.order_number || `#ORD-${order.id.slice(0, 8)}`;
                         
                         return (
                           <Link
@@ -320,7 +337,7 @@ export default function AdminPage() {
                                 {orderNumber}
                               </p>
                               <p className="text-xs text-neutral-500 truncate">
-                                {order.users?.full_name || 'Unknown'} • {formatCurrency(order.total_amount || order.total || 0)}
+                                {order.users?.full_name || 'Unknown'} • {formatCurrency(order.total_amount || 0)}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
