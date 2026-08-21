@@ -7,5 +7,15 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000', // Your backend server URL
+        changeOrigin: true,
+      },
+    },
+  },
   publicDir: 'public', // Make sure _redirects is in public folder
 })
+
+

@@ -47,16 +47,41 @@ export default function ForgotPasswordPage() {
     }
 
     setLoading(true);
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://ambertouchlb.vercel.app/reset-password',
-    });
-    
-    if (err) { 
-      setError(err.message); 
-      setLoading(false); 
-    } else { 
-      setSent(true); 
-      setLoading(false); 
+
+    try {
+      // 1. Send reset password request to Supabase (optional - skip if you handle password reset yourself)
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://ambertouchlb.vercel.app/reset-password',
+      });
+
+      if (resetError) {
+        setError(resetError.message);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Send professional email via your SMTP API
+      const resetLink = 'https://ambertouchlb.vercel.app/reset-password';
+      
+      const response = await fetch('/api/send-reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, resetLink }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send reset password email');
+      }
+
+      setSent(true);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send reset password email. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -127,7 +152,7 @@ export default function ForgotPasswordPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {/* Error message from Supabase */}
+              {/* Error message */}
               <AnimatePresence>
                 {error && (
                   <motion.div
