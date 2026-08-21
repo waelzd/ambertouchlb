@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { User, Package, Heart, MapPin, LogOut, ChevronRight, CheckCircle, X, Trash2, Edit2, Minus, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -140,6 +140,7 @@ function EditOrderModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadItems = async () => {
@@ -159,7 +160,6 @@ function EditOrderModal({
           const availableSizes = sizesMap[item.product_id] || [];
           const basePrice = basePriceMap[item.product_id] || 0;
           
-          // Find the selected size to get its price
           const selectedSize = availableSizes.find((s: any) => s.label === item.size);
           const itemPrice = selectedSize ? selectedSize.price : basePrice;
           
@@ -183,6 +183,24 @@ function EditOrderModal({
     };
     loadItems();
   }, [order]);
+
+  // Close modal when clicking outside
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  // Close modal with Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   const updateQuantity = (itemId: string, delta: number) => {
     setItems(prev =>
@@ -324,8 +342,15 @@ function EditOrderModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-neutral-900 max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl border border-white/10 animate-scale-up">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm animate-fade-in"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        ref={modalRef}
+        className="bg-neutral-900 max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl border border-white/10 animate-scale-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="sticky top-0 bg-neutral-900 border-b border-white/10 px-6 py-5 flex items-center justify-between z-10">
           <div>
             <h3 className="text-xl font-serif font-light text-white">
