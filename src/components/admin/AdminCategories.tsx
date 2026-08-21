@@ -340,14 +340,14 @@ export default function AdminCategories() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openEdit(category)}
-                          className="p-2 text-blue-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                          className="p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
                           title="Edit category"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => setDeleteId(category.id)}
-                          className="p-2 text-red-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                          className="p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                           title="Delete category"
                         >
                           <Trash2 size={16} />
