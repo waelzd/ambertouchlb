@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Mail, ArrowLeft, AlertCircle } from 'lucide-react';
 
@@ -50,15 +49,15 @@ export default function ForgotPasswordPage() {
 
     try {
       // 1. Send reset password request to Supabase
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://ambertouchlb.vercel.app/reset-password',
-      });
+      // const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      //   redirectTo: 'https://ambertouchlb.vercel.app/reset-password',
+      // });
 
-      if (resetError) {
-        setError(resetError.message);
-        setLoading(false);
-        return;
-      }
+      // if (resetError) {
+      //   setError(resetError.message);
+      //   setLoading(false);
+      //   return;
+      // }
 
       // 2. Send professional email via your SMTP API
       const resetLink = 'https://ambertouchlb.vercel.app/reset-password';
