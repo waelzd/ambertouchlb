@@ -40,6 +40,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
+            <ScrollToTop />
             <Routes>
               {/* Admin routes — no store layout */}
               <Route path="/admin/*" element={<AdminPage />} />
