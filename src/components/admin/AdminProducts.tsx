@@ -707,14 +707,14 @@ export default function AdminProducts() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => openEdit(product)}
-                            className="p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                            className="p-2 text-blue-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
                             title="Edit product"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
                             onClick={() => setDeleteId(product.id)}
-                            className="p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                            className="p-2 text-red-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                             title="Delete product"
                           >
                             <Trash2 size={16} />
