@@ -64,7 +64,7 @@ export default function AdminPage() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  //const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -189,13 +189,13 @@ const fetchOrderDetails = async (orderId: string) => {
 };
 
   const handleOrderClick = (order: any) => {
-    setSelectedOrder(order);
+    //setSelectedOrder(order);
     fetchOrderDetails(order.id);
   };
 
   const closeModal = () => {
     setModalOpen(false);
-    setSelectedOrder(null);
+    //setSelectedOrder(null);
     setOrderDetails(null);
   };
 
