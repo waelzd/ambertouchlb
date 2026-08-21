@@ -39,93 +39,105 @@ export default function AdminOverview() {
     const load = async () => {
       try {
         setError(null);
-        
-        // Get delivered orders with order items including size
-        const { data: deliveredData, error: deliveredError } = await supabase
-          .from('orders')
-          .select(`
-            id,
-            order_number,
-            total_amount,
-            status,
-            created_at,
-            user_id,
-            order_items (
-              id,
-              quantity,
-              price,
-              size,
-              product_id,
-              products (
-                id,
-                name,
-                price,
-                image_urls,
-                sizes
-              )
-            )
-          `)
-          .eq('status', 'delivered')
-          .order('created_at', { ascending: false })
-          .limit(10);
+        setLoading(true);
 
-        if (deliveredError) {
-          console.error('Error fetching delivered orders:', deliveredError);
+        // Run all queries in parallel for faster loading
+        const [
+          deliveredOrdersPromise,
+          deliveredCountPromise,
+          customersCountPromise,
+          productsCountPromise,
+          revenuePromise,
+        ] = await Promise.all([
+          // 1. Get delivered orders with items (limited to 10)
+          supabase
+            .from('orders')
+            .select(`
+              id,
+              order_number,
+              total_amount,
+              status,
+              created_at,
+              user_id,
+              order_items!inner (
+                id,
+                quantity,
+                price,
+                size,
+                product_id,
+                products!inner (
+                  id,
+                  name,
+                  price,
+                  image_urls,
+                  sizes
+                )
+              )
+            `)
+            .eq('status', 'delivered')
+            .order('created_at', { ascending: false })
+            .limit(10),
+
+          // 2. Get total delivered count
+          supabase
+            .from('orders')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'delivered'),
+
+          // 3. Get customers count
+          supabase
+            .from('users')
+            .select('id', { count: 'exact', head: true })
+            .eq('role', 'customer'),
+
+          // 4. Get products count
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true }),
+
+          // 5. Get total revenue (only total_amount, not all fields)
+          supabase
+            .from('orders')
+            .select('total_amount')
+            .eq('status', 'delivered'),
+        ]);
+
+        // Check for errors
+        if (deliveredOrdersPromise.error) {
+          console.error('Error fetching delivered orders:', deliveredOrdersPromise.error);
           setError('Failed to load delivered orders');
           setLoading(false);
           return;
         }
 
-        // Get total delivered count
-        const { count: deliveredCount, error: countError } = await supabase
-          .from('orders')
-          .select('id', { count: 'exact' })
-          .eq('status', 'delivered');
+        // Get the data from all promises
+        const deliveredData = deliveredOrdersPromise.data || [];
+        const deliveredCount = deliveredCountPromise.count || 0;
+        const customersCount = customersCountPromise.count || 0;
+        const productsCount = productsCountPromise.count || 0;
+        const revenueData = revenuePromise.data || [];
 
-        if (countError) {
-          console.error('Error counting delivered orders:', countError);
+        // Calculate total revenue
+        const totalRevenue = revenueData.reduce((sum: number, o: any) => sum + (o.total_amount ?? 0), 0);
+
+        // Fetch user details for delivered orders (only if there are orders)
+        let usersMap: Record<string, any> = {};
+        if (deliveredData.length > 0) {
+          const userIds = deliveredData.map((o: any) => o.user_id).filter(Boolean);
+          
+          if (userIds.length > 0) {
+            // Use a more efficient query with select
+            const { data: usersData } = await supabase
+              .from('users')
+              .select('id, full_name, email')
+              .in('id', userIds);
+
+            usersMap = Object.fromEntries((usersData ?? []).map((u: any) => [u.id, u]));
+          }
         }
 
-        // Get customers count
-        const { count: customersCount, error: customersError } = await supabase
-          .from('users')
-          .select('id', { count: 'exact' })
-          .eq('role', 'customer');
-
-        if (customersError) {
-          console.error('Error counting customers:', customersError);
-        }
-
-        // Get products count
-        const { count: productsCount, error: productsError } = await supabase
-          .from('products')
-          .select('id', { count: 'exact' });
-
-        if (productsError) {
-          console.error('Error counting products:', productsError);
-        }
-
-        // Calculate total revenue from delivered orders
-        const { data: allDelivered, error: revenueError } = await supabase
-          .from('orders')
-          .select('total_amount')
-          .eq('status', 'delivered');
-
-        if (revenueError) {
-          console.error('Error calculating revenue:', revenueError);
-        }
-
-        const totalRevenue = (allDelivered ?? []).reduce((sum: number, o: any) => sum + (o.total_amount ?? 0), 0);
-
-        // Fetch user details for delivered orders
-        const userIds = (deliveredData ?? []).map((o: any) => o.user_id).filter(Boolean);
-        const { data: usersData } = userIds.length > 0
-          ? await supabase.from('users').select('id, full_name, email').in('id', userIds)
-          : { data: [] };
-
-        const usersMap = Object.fromEntries((usersData ?? []).map((u: any) => [u.id, u]));
-
-        const deliveredWithUsers = (deliveredData ?? []).map((o: any) => {
+        // Process delivered orders data
+        const deliveredWithUsers = deliveredData.map((o: any) => {
           const orderItems = o.order_items || [];
           const subtotal = orderItems.reduce((sum: number, item: any) => {
             return sum + (item.price * item.quantity);
@@ -154,15 +166,13 @@ export default function AdminOverview() {
         });
 
         setStats({
-          orders: deliveredCount ?? 0,
+          orders: deliveredCount,
           revenue: totalRevenue,
-          customers: customersCount ?? 0,
-          products: productsCount ?? 0,
+          customers: customersCount,
+          products: productsCount,
         });
         
-        setDeliveredOrders(deliveredWithUsers.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        ));
+        setDeliveredOrders(deliveredWithUsers);
         setLoading(false);
       } catch (err) {
         console.error('Error loading data:', err);
@@ -174,6 +184,7 @@ export default function AdminOverview() {
     load();
   }, []);
 
+  // Rest of the component remains the same...
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
