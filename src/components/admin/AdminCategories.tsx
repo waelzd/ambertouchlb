@@ -333,7 +333,7 @@ export default function AdminCategories() {
                         {category.slug}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-neutral-500 hidden md:table-cell max-w-xs truncate">
+                    <td className="px-6 py-4 text-neutral-900 hidden md:table-cell max-w-xs truncate">
                       {category.description ?? <span className="text-neutral-400 italic">No description</span>}
                     </td>
                     <td className="px-6 py-4">
