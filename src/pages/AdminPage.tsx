@@ -353,7 +353,7 @@ export default function AdminPage() {
       )}
 
       {/* Main */}
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen bg-neutral-900">
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-neutral-900/95 backdrop-blur-md border-b border-neutral-800/50 px-6 py-4 flex items-center gap-4">
           <button 
