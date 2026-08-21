@@ -18,7 +18,8 @@ import {
   XCircle,
   X,
   Mail,
-  Eye
+  Eye,
+  Search
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -236,10 +237,10 @@ export default function AdminPage() {
   }, [profileOpen, notificationsOpen]);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-900">
       <div className="flex flex-col items-center gap-3">
         <div className="w-10 h-10 border-3 border-gold-400 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-neutral-500">Loading admin panel...</p>
+        <p className="text-sm text-neutral-400">Loading admin panel...</p>
       </div>
     </div>
   );
@@ -281,7 +282,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex">
+    <div className="min-h-screen bg-neutral-900 flex">
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-neutral-950 text-white flex flex-col transition-transform duration-300 shadow-2xl ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         {/* Brand */}
@@ -352,63 +353,80 @@ export default function AdminPage() {
       )}
 
       {/* Main */}
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen bg-neutral-900">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-neutral-200/50 px-6 py-4 flex items-center gap-4">
+        <header className="sticky top-0 z-30 bg-neutral-900/95 backdrop-blur-md border-b border-neutral-800/50 px-6 py-4 flex items-center gap-4">
           <button 
             onClick={() => setSidebarOpen(true)} 
-            className="lg:hidden p-2 text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors"
+            className="lg:hidden p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-xl transition-colors"
           >
             <Menu size={20} />
           </button>
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-neutral-900">{currentPage}</span>
-            <span className="text-xs text-neutral-400">/</span>
-            <span className="text-xs text-neutral-400">Admin</span>
+            <span className="text-sm font-medium text-white">{currentPage}</span>
+            <span className="text-xs text-neutral-600">/</span>
+            <span className="text-xs text-neutral-500">Admin</span>
           </div>
 
           <div className="ml-auto flex items-center gap-3">
-            {/* Notifications - Only Pending Orders */}
+            {/* Search Bar */}
+            <div className="hidden md:flex items-center relative">
+              <Search size={16} className="absolute left-3 text-neutral-500" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700/50 rounded-lg text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-gold-400/50 focus:ring-2 focus:ring-gold-400/20 transition-all duration-200 w-48"
+              />
+            </div>
+
+            {/* Notifications - Professional Design */}
             <div className="relative notifications-dropdown">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl transition-colors relative"
+                className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-xl transition-all duration-200 relative"
               >
                 <Bell size={18} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-gold-400 text-neutral-900 text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg shadow-gold-400/30">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 max-h-[400px] bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden animate-fadeIn">
-                  <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-neutral-900">
-                      Pending Orders
-                      {pendingOrders.length > 0 && (
-                        <span className="ml-2 text-xs font-normal text-neutral-500">
-                          ({pendingOrders.length})
-                        </span>
-                      )}
-                    </h3>
+                <div className="absolute right-0 mt-3 w-96 max-h-[450px] bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-800 overflow-hidden animate-fadeIn">
+                  <div className="px-5 py-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-800/30">
+                    <div className="flex items-center gap-2">
+                      <Bell size={16} className="text-gold-400" />
+                      <h3 className="text-sm font-semibold text-white">
+                        Pending Orders
+                        {pendingOrders.length > 0 && (
+                          <span className="ml-2 text-xs font-normal text-neutral-400">
+                            ({pendingOrders.length})
+                          </span>
+                        )}
+                      </h3>
+                    </div>
                     <Link 
                       to="/admin/orders" 
-                      className="text-xs text-gold-600 hover:text-gold-700 font-medium"
+                      className="text-xs text-gold-400 hover:text-gold-300 font-medium transition-colors flex items-center gap-1"
                       onClick={() => setNotificationsOpen(false)}
                     >
                       View All
+                      <ChevronRight size={14} />
                     </Link>
                   </div>
-                  <div className="overflow-y-auto max-h-[340px]">
+                  
+                  <div className="overflow-y-auto max-h-[360px]">
                     {pendingOrders.length === 0 ? (
-                      <div className="px-4 py-8 text-center">
-                        <CheckCircle size={32} className="text-green-300 mx-auto mb-2" />
-                        <p className="text-sm text-neutral-500">No pending orders</p>
-                        <p className="text-xs text-neutral-400">All orders are processed</p>
+                      <div className="px-5 py-12 text-center">
+                        <div className="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+                          <CheckCircle size={28} className="text-green-400" />
+                        </div>
+                        <p className="text-sm text-neutral-400">No pending orders</p>
+                        <p className="text-xs text-neutral-500 mt-1">All orders are processed</p>
                       </div>
                     ) : (
                       pendingOrders.map((order) => {
@@ -420,26 +438,26 @@ export default function AdminPage() {
                           <div
                             key={order.id}
                             onClick={() => handleOrderClick(order)}
-                            className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0 cursor-pointer group"
+                            className="flex items-start gap-4 px-5 py-4 hover:bg-neutral-800/50 transition-colors border-b border-neutral-800/50 last:border-0 cursor-pointer group"
                           >
-                            <div className={`p-2 rounded-lg ${statusColor}`}>
-                              <StatusIcon size={14} />
+                            <div className={`p-2.5 rounded-xl ${statusColor} shrink-0`}>
+                              <StatusIcon size={16} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-neutral-900">
+                                <p className="text-sm font-medium text-white group-hover:text-gold-400 transition-colors">
                                   {orderNumber}
                                 </p>
-                                <Eye size={14} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Eye size={14} className="text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
-                              <p className="text-xs text-neutral-500 truncate">
+                              <p className="text-xs text-neutral-400 truncate mt-0.5">
                                 {order.users?.full_name || 'Unknown'} • {formatCurrency(order.total_amount || 0)}
                               </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <span className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full ${statusColor}`}>
                                   {order.status}
                                 </span>
-                                <span className="text-[10px] text-neutral-400">
+                                <span className="text-[10px] text-neutral-500">
                                   {formatDate(order.created_at)}
                                 </span>
                               </div>
@@ -456,7 +474,7 @@ export default function AdminPage() {
             {/* View Store */}
             <Link 
               to="/" 
-              className="hidden sm:flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 px-3 py-2 bg-neutral-100 hover:bg-neutral-200 rounded-xl transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white px-3 py-2 bg-neutral-800/50 hover:bg-neutral-800 rounded-lg transition-all duration-200 border border-neutral-700/30 hover:border-neutral-600"
             >
               View Store <ChevronRight size={12} />
             </Link>
@@ -465,7 +483,7 @@ export default function AdminPage() {
             <div className="relative profile-dropdown">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 p-1.5 hover:bg-neutral-100 rounded-xl transition-colors"
+                className="flex items-center gap-2 p-1.5 hover:bg-neutral-800 rounded-xl transition-all duration-200"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center">
                   <User size={14} className="text-neutral-900" />
@@ -474,14 +492,14 @@ export default function AdminPage() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-neutral-200 py-2 animate-fadeIn">
-                  <div className="px-4 py-3 border-b border-neutral-100">
-                    <p className="text-sm font-medium text-neutral-900">{profile.full_name}</p>
-                    <p className="text-xs text-neutral-500">{profile.email}</p>
+                <div className="absolute right-0 mt-2 w-56 bg-neutral-900 rounded-xl shadow-2xl border border-neutral-800 py-2 animate-fadeIn">
+                  <div className="px-4 py-3 border-b border-neutral-800">
+                    <p className="text-sm font-medium text-white">{profile.full_name}</p>
+                    <p className="text-xs text-neutral-400">{profile.email}</p>
                   </div>
                   <Link
                     to="/"
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
                     onClick={() => setProfileOpen(false)}
                   >
                     <ShoppingCart size={14} />
@@ -493,7 +511,7 @@ export default function AdminPage() {
                       signOut(); 
                       navigate('/'); 
                     }}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-neutral-100 mt-1"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors border-t border-neutral-800 mt-1"
                   >
                     <LogOut size={14} />
                     Sign Out
@@ -516,40 +534,40 @@ export default function AdminPage() {
         </main>
       </div>
 
-      {/* Order Details Modal */}
+      {/* Order Details Modal - Professional Design */}
       <AnimatePresence>
         {modalOpen && orderDetails && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-md"
             onClick={handleBackdropClick}
           >
             <div 
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/50"
               onClick={closeModal}
             />
             
             <motion.div
               ref={modalRef}
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+              className="relative bg-neutral-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-neutral-800"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+              <div className="sticky top-0 bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-800 px-6 py-5 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-neutral-900">
-                    Order {orderDetails.order_number || `#${orderDetails.id.slice(0, 8)}`}
+                  <h3 className="text-lg font-semibold text-white">
+                    Order <span className="text-gold-400">{orderDetails.order_number || `#${orderDetails.id.slice(0, 8)}`}</span>
                   </h3>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-neutral-400 mt-0.5">
                     {formatFullDate(orderDetails.created_at)}
                   </p>
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl transition-colors"
+                  className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-xl transition-all duration-200"
                 >
                   <X size={20} />
                 </button>
@@ -558,46 +576,46 @@ export default function AdminPage() {
               {loadingDetails ? (
                 <div className="p-12 text-center">
                   <div className="w-10 h-10 border-3 border-gold-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-sm text-neutral-500 mt-4">Loading order details...</p>
+                  <p className="text-sm text-neutral-400 mt-4">Loading order details...</p>
                 </div>
               ) : (
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
                   {/* Order Status */}
-                  <div className="flex items-center gap-2 mb-6">
+                  <div className="flex items-center gap-3 mb-6">
                     <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${
                       ORDER_STATUS_COLORS[orderDetails.status as keyof typeof ORDER_STATUS_COLORS] || 'text-neutral-600 bg-neutral-50'
                     }`}>
                       {orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}
                     </span>
-                    <span className="text-xs text-neutral-400">•</span>
-                    <span className="text-xs text-neutral-400">
+                    <span className="text-xs text-neutral-500">•</span>
+                    <span className="text-xs text-neutral-500">
                       {formatDate(orderDetails.created_at)}
                     </span>
                   </div>
 
                   {/* Customer Info */}
-                  <div className="bg-neutral-50 rounded-xl p-4 mb-6">
-                    <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Customer Information</h4>
+                  <div className="bg-neutral-800/50 border border-neutral-700/50 rounded-xl p-4 mb-6">
+                    <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Customer Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="flex items-center gap-2">
-                        <User size={14} className="text-neutral-400" />
-                        <span className="text-sm text-neutral-700">{orderDetails.users?.full_name || 'Unknown'}</span>
+                        <User size={14} className="text-neutral-500" />
+                        <span className="text-sm text-white">{orderDetails.users?.full_name || 'Unknown'}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Mail size={14} className="text-neutral-400" />
-                        <span className="text-sm text-neutral-700">{orderDetails.users?.email || 'No email'}</span>
+                        <Mail size={14} className="text-neutral-500" />
+                        <span className="text-sm text-neutral-300">{orderDetails.users?.email || 'No email'}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Order Items */}
                   <div className="mb-6">
-                    <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Order Items</h4>
+                    <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Order Items</h4>
                     <div className="space-y-3">
                       {orderDetails.order_items?.map((item: any) => (
-                        <div key={item.id} className="flex items-center gap-4 p-3 bg-neutral-50 rounded-xl">
+                        <div key={item.id} className="flex items-center gap-4 p-3 bg-neutral-800/30 border border-neutral-700/30 rounded-xl">
                           {item.products?.image_urls?.[0] && (
-                            <div className="w-16 h-20 bg-neutral-200 rounded-lg overflow-hidden shrink-0">
+                            <div className="w-16 h-20 bg-neutral-800 rounded-lg overflow-hidden shrink-0">
                               <img 
                                 src={item.products.image_urls[0]} 
                                 alt={item.products.name || 'Product'} 
@@ -606,17 +624,17 @@ export default function AdminPage() {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-neutral-900">{item.products?.name || 'Unknown Product'}</p>
+                            <p className="text-sm font-medium text-white">{item.products?.name || 'Unknown Product'}</p>
                             <div className="flex items-center gap-3 mt-1">
                               {item.size && (
-                                <span className="text-xs text-neutral-500">Size: {item.size}</span>
+                                <span className="text-xs text-neutral-400">Size: {item.size}</span>
                               )}
-                              <span className="text-xs text-neutral-500">Qty: {item.quantity}</span>
-                              <span className="text-xs font-medium text-gold-600">{formatCurrency(item.price)}</span>
+                              <span className="text-xs text-neutral-400">Qty: {item.quantity}</span>
+                              <span className="text-xs font-medium text-gold-400">{formatCurrency(item.price)}</span>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-neutral-900">{formatCurrency(item.price * item.quantity)}</p>
+                            <p className="text-sm font-semibold text-white">{formatCurrency(item.price * item.quantity)}</p>
                           </div>
                         </div>
                       ))}
@@ -624,22 +642,22 @@ export default function AdminPage() {
                   </div>
 
                   {/* Order Summary */}
-                  <div className="border-t border-neutral-200 pt-4">
+                  <div className="border-t border-neutral-800 pt-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-neutral-500">Subtotal</span>
-                      <span className="text-neutral-700">
+                      <span className="text-neutral-400">Subtotal</span>
+                      <span className="text-white">
                         {formatCurrency(orderDetails.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm mt-2">
-                      <span className="text-neutral-500">Delivery</span>
-                      <span className="text-neutral-700">
+                      <span className="text-neutral-400">Delivery</span>
+                      <span className="text-white">
                         {formatCurrency(Math.max(0, (orderDetails.total_amount || 0) - (orderDetails.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0)))}
                       </span>
                     </div>
-                    <div className="flex justify-between text-base font-bold mt-3 pt-3 border-t border-neutral-200">
-                      <span className="text-neutral-900">Total</span>
-                      <span className="text-gold-600">{formatCurrency(orderDetails.total_amount || 0)}</span>
+                    <div className="flex justify-between text-base font-bold mt-3 pt-3 border-t border-neutral-800">
+                      <span className="text-white">Total</span>
+                      <span className="text-gold-400">{formatCurrency(orderDetails.total_amount || 0)}</span>
                     </div>
                   </div>
 
@@ -654,7 +672,7 @@ export default function AdminPage() {
                     </Link>
                     <button
                       onClick={closeModal}
-                      className="px-4 py-2.5 border border-neutral-300 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition-all duration-300"
+                      className="px-4 py-2.5 border border-neutral-700 text-neutral-400 rounded-xl font-medium hover:bg-neutral-800 hover:text-white transition-all duration-300"
                     >
                       Close
                     </button>
