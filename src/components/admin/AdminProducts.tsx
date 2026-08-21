@@ -679,10 +679,12 @@ export default function AdminProducts() {
                       <td className="px-6 py-4 text-neutral-500 hidden md:table-cell">
                         {(product as any).categories?.name || '—'}
                       </td>
-                      <td className="inline-flex items-center px-2.5 py-1 rounded-md bg-gold-50 text-gold-700 text-xs font-medium border border-gold-200">
+                      <td className="px-6 py-4 text-neutral-500 hidden lg:table-cell">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-gold-50 text-gold-700 text-xs font-medium border border-gold-200">
                         {product.sizes && product.sizes.length > 0
                           ? product.sizes.map(s => s.label).join(', ')
                           : '—'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 hidden lg:table-cell">
                         <div>
