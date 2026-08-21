@@ -13,10 +13,14 @@ import {
   ChevronDown,
   User,
   Bell,
-  ShoppingBag,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -26,6 +30,7 @@ import AdminOrders from '../components/admin/AdminOrders';
 import AdminCustomers from '../components/admin/AdminCustomers';
 import AdminBanners from '../components/admin/AdminBanners';
 import AdminCategories from '../components/admin/AdminCategories';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -61,6 +66,10 @@ export default function AdminPage() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<any | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'admin')) {
@@ -68,7 +77,7 @@ export default function AdminPage() {
     }
   }, [profile, loading, navigate]);
 
-  // Load pending orders for notifications
+  // Load pending orders for notifications (only 'pending' status)
   useEffect(() => {
     if (profile?.role === 'admin') {
       loadPendingOrders();
@@ -107,7 +116,7 @@ export default function AdminPage() {
   }, [profile]);
 
   const loadPendingOrders = async () => {
-    // Fetch only pending and processing orders
+    // Fetch only pending orders (not processing)
     const { data } = await supabase
       .from('orders')
       .select(`
@@ -122,14 +131,76 @@ export default function AdminPage() {
           email
         )
       `)
-      .in('status', ['pending', 'processing'])
+      .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(10);
     
     setPendingOrders(data ?? []);
-    // Count only pending and processing orders as unread
-    const unread = data?.filter(o => o.status === 'pending' || o.status === 'processing').length || 0;
+    // Count only pending orders as unread
+    const unread = data?.filter(o => o.status === 'pending').length || 0;
     setUnreadCount(unread);
+  };
+
+  // Fetch order details with items
+  const fetchOrderDetails = async (orderId: string) => {
+    setLoadingDetails(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          total_amount,
+          status,
+          created_at,
+          user_id,
+          users (
+            full_name,
+            email,
+            phone,
+            address
+          ),
+          order_items (
+            id,
+            quantity,
+            price,
+            size,
+            product_id,
+            products (
+              id,
+              name,
+              price,
+              image_urls,
+              sizes
+            )
+          )
+        `)
+        .eq('id', orderId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching order details:', error);
+        return;
+      }
+
+      setOrderDetails(data);
+      setModalOpen(true);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleOrderClick = (order: any) => {
+    setSelectedOrder(order);
+    fetchOrderDetails(order.id);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedOrder(null);
+    setOrderDetails(null);
   };
 
   // Close dropdowns when clicking outside
@@ -179,6 +250,17 @@ export default function AdminPage() {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     return `${diffDays}d ago`;
+  };
+
+  const formatFullDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -323,19 +405,21 @@ export default function AdminPage() {
                         const orderNumber = order.order_number || `#ORD-${order.id.slice(0, 8)}`;
                         
                         return (
-                          <Link
+                          <div
                             key={order.id}
-                            to={`/admin/orders`}
-                            className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
-                            onClick={() => setNotificationsOpen(false)}
+                            onClick={() => handleOrderClick(order)}
+                            className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0 cursor-pointer group"
                           >
                             <div className={`p-2 rounded-lg ${statusColor}`}>
                               <StatusIcon size={14} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-neutral-900">
-                                {orderNumber}
-                              </p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-neutral-900">
+                                  {orderNumber}
+                                </p>
+                                <Eye size={14} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
                               <p className="text-xs text-neutral-500 truncate">
                                 {order.users?.full_name || 'Unknown'} • {formatCurrency(order.total_amount || 0)}
                               </p>
@@ -348,7 +432,7 @@ export default function AdminPage() {
                                 </span>
                               </div>
                             </div>
-                          </Link>
+                          </div>
                         );
                       })
                     )}
@@ -419,6 +503,163 @@ export default function AdminPage() {
           </Routes>
         </main>
       </div>
+
+      {/* Order Details Modal */}
+      <AnimatePresence>
+        {modalOpen && orderDetails && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div 
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={closeModal}
+            />
+            
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-neutral-900">
+                    Order {orderDetails.order_number || `#${orderDetails.id.slice(0, 8)}`}
+                  </h3>
+                  <p className="text-xs text-neutral-500">
+                    {formatFullDate(orderDetails.created_at)}
+                  </p>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {loadingDetails ? (
+                <div className="p-12 text-center">
+                  <div className="w-10 h-10 border-3 border-gold-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-sm text-neutral-500 mt-4">Loading order details...</p>
+                </div>
+              ) : (
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+                  {/* Order Status */}
+                  <div className="flex items-center gap-2 mb-6">
+                    <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${
+                      ORDER_STATUS_COLORS[orderDetails.status as keyof typeof ORDER_STATUS_COLORS] || 'text-neutral-600 bg-neutral-50'
+                    }`}>
+                      {orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}
+                    </span>
+                    <span className="text-xs text-neutral-400">•</span>
+                    <span className="text-xs text-neutral-400">
+                      {formatDate(orderDetails.created_at)}
+                    </span>
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="bg-neutral-50 rounded-xl p-4 mb-6">
+                    <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Customer Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2">
+                        <User size={14} className="text-neutral-400" />
+                        <span className="text-sm text-neutral-700">{orderDetails.users?.full_name || 'Unknown'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail size={14} className="text-neutral-400" />
+                        <span className="text-sm text-neutral-700">{orderDetails.users?.email || 'No email'}</span>
+                      </div>
+                      {orderDetails.users?.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone size={14} className="text-neutral-400" />
+                          <span className="text-sm text-neutral-700">{orderDetails.users.phone}</span>
+                        </div>
+                      )}
+                      {orderDetails.users?.address && (
+                        <div className="flex items-center gap-2">
+                          <MapPin size={14} className="text-neutral-400" />
+                          <span className="text-sm text-neutral-700">{orderDetails.users.address}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  <div className="mb-6">
+                    <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Order Items</h4>
+                    <div className="space-y-3">
+                      {orderDetails.order_items?.map((item: any) => (
+                        <div key={item.id} className="flex items-center gap-4 p-3 bg-neutral-50 rounded-xl">
+                          {item.products?.image_urls?.[0] && (
+                            <div className="w-16 h-20 bg-neutral-200 rounded-lg overflow-hidden shrink-0">
+                              <img 
+                                src={item.products.image_urls[0]} 
+                                alt={item.products.name || 'Product'} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-neutral-900">{item.products?.name || 'Unknown Product'}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              {item.size && (
+                                <span className="text-xs text-neutral-500">Size: {item.size}</span>
+                              )}
+                              <span className="text-xs text-neutral-500">Qty: {item.quantity}</span>
+                              <span className="text-xs font-medium text-gold-600">{formatCurrency(item.price)}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-neutral-900">{formatCurrency(item.price * item.quantity)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Order Summary */}
+                  <div className="border-t border-neutral-200 pt-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-neutral-500">Subtotal</span>
+                      <span className="text-neutral-700">
+                        {formatCurrency(orderDetails.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-neutral-500">Delivery</span>
+                      <span className="text-neutral-700">
+                        {formatCurrency(Math.max(0, (orderDetails.total_amount || 0) - (orderDetails.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0)))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-base font-bold mt-3 pt-3 border-t border-neutral-200">
+                      <span className="text-neutral-900">Total</span>
+                      <span className="text-gold-600">{formatCurrency(orderDetails.total_amount || 0)}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-6 flex gap-3">
+                    <Link
+                      to={`/admin/orders`}
+                      onClick={closeModal}
+                      className="flex-1 text-center px-4 py-2.5 bg-gold-400 text-neutral-900 rounded-xl font-medium hover:bg-gold-300 transition-all duration-300"
+                    >
+                      Go to Orders
+                    </Link>
+                    <button
+                      onClick={closeModal}
+                      className="px-4 py-2.5 border border-neutral-300 text-neutral-700 rounded-xl font-medium hover:bg-neutral-50 transition-all duration-300"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
