@@ -526,7 +526,7 @@ export default function AdminOrders() {
                   onClick={() => setModalOpen(false)}
                   className="p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl transition-colors"
                 >
-                  <X size={20} />
+                  <XCircle size={20} />
                 </button>
               </div>
 
