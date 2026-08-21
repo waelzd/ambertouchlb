@@ -343,12 +343,12 @@ function EditOrderModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-12 md:pt-20 bg-black/70 backdrop-blur-sm animate-fade-in overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm animate-fade-in"
       onClick={handleBackdropClick}
     >
       <div 
         ref={modalRef}
-        className="bg-neutral-900 max-w-3xl w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl border border-white/10 animate-scale-up my-4"
+        className="bg-neutral-900 max-w-3xl w-full max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl border border-white/10 animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-neutral-900 border-b border-white/10 px-6 py-5 flex items-center justify-between z-10">
