@@ -71,13 +71,19 @@ export default function LoginPage() {
     }
   };
 
+    // Supabase storage URL
+  const SUPABASE_URL = 'https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public';
+  const BUCKET_NAME = 'images';
+  const FOLDER_NAME = 'ambertouch';
+  const storyImageUrl = `${SUPABASE_URL}/${BUCKET_NAME}/${FOLDER_NAME}/LoginImg.png`;
+
   return (
     <div className="min-h-screen pt-20 flex bg-neutral-950">
       
       {/* LEFT IMAGE */}
       <div className="hidden lg:block lg:w-1/2 xl:w-3/5 relative overflow-hidden">
         <img
-          src="https://images.pexels.com/photos/994523/pexels-photo-994523.jpeg"
+          src={storyImageUrl}
           alt=""
           className="w-full h-full object-cover"
         />
