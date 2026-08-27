@@ -58,13 +58,9 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic
+  // Show popup logic - Show on every reload for customers who haven't used the discount
   useEffect(() => {
-    // Don't show popup if:
-    // 1. Still checking user status
-    // 2. User is authenticated and has already used the discount
-    // 3. User is authenticated and has the discount flag set to true
-    // 4. User is an admin (role is 'admin')
+    // Don't show popup if still checking user status
     if (isCheckingUser) return;
 
     // Check if user is admin - don't show popup for admins
@@ -73,24 +69,38 @@ export default function HomePage() {
       return;
     }
 
-    if (authUser && hasUsedDiscount) {
-      setShowPopup(false);
+    // Check if user is customer and hasn't used the discount
+    if (authUser && userRole === 'customer' && !hasUsedDiscount) {
+      // Show popup on every reload for eligible customers
+      setShowPopup(true);
       return;
     }
 
-    // Show popup for non-authenticated users or authenticated users who haven't used the discount
-    const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-    if (!hasDismissed) {
-      const timer = setTimeout(() => {
-        setShowPopup(true);
-      }, 2000);
-      return () => clearTimeout(timer);
+    // For non-authenticated users, show popup based on localStorage
+    if (!authUser) {
+      const hasDismissed = localStorage.getItem('welcomePopupDismissed');
+      if (!hasDismissed) {
+        const timer = setTimeout(() => {
+          setShowPopup(true);
+        }, 2000);
+        return () => clearTimeout(timer);
+      } else {
+        setShowPopup(false);
+      }
+      return;
     }
+
+    // Hide popup for all other cases
+    setShowPopup(false);
   }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    localStorage.setItem('welcomePopupDismissed', 'true');
+    // For non-authenticated users, store dismissal in localStorage
+    if (!authUser) {
+      localStorage.setItem('welcomePopupDismissed', 'true');
+    }
+    // For authenticated users, we don't store dismissal because we check the DB
   };
 
   // Handle signup and mark discount as used
@@ -195,10 +205,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal - Only shown for customers who haven't used the discount */}
+      {/* Popup Modal - Shows for customers who haven't used the discount and on every reload */}
       {!isCheckingUser && 
-       !(authUser && (hasUsedDiscount || userRole === 'admin')) && 
-       showPopup && (
+       showPopup && 
+       !(authUser && userRole === 'admin') &&
+       (authUser ? (userRole === 'customer' && !hasUsedDiscount) : true) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div 
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
