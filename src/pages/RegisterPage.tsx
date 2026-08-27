@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle, XCircle, AlertCircle, Shield } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, XCircle, AlertCircle, Shield, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FieldErrors {
   fullName?: string;
   email?: string;
+  phone?: string;
   password?: string;
   confirm?: string;
 }
@@ -14,6 +15,7 @@ interface FieldErrors {
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -26,7 +28,8 @@ export default function RegisterPage() {
     password: false,
     confirm: false,
     fullName: false,
-    email: false
+    email: false,
+    phone: false
   });
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -44,6 +47,13 @@ export default function RegisterPage() {
     if (!name.trim()) return 'Full Name is required';
     if (!/^[a-zA-Z\s]+$/.test(name.trim())) return 'Name can only contain letters and spaces';
     if (name.trim().length > 20) return 'Name must be 20 characters or less';
+    return undefined;
+  };
+
+  // Validate phone: exactly 8 digits
+  const validatePhone = (phone: string): string | undefined => {
+    if (!phone.trim()) return 'Phone number is required';
+    if (!/^[0-9]{8}$/.test(phone.trim())) return 'Phone must be exactly 8 digits';
     return undefined;
   };
 
@@ -76,7 +86,16 @@ export default function RegisterPage() {
     }
   };
 
-  const handleBlur = (field: 'password' | 'confirm' | 'fullName' | 'email') => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+    setPhone(value);
+    if (touched.phone) {
+      const phoneError = validatePhone(value);
+      setFieldErrors(prev => ({ ...prev, phone: phoneError }));
+    }
+  };
+
+  const handleBlur = (field: 'password' | 'confirm' | 'fullName' | 'email' | 'phone') => {
     setTouched(prev => ({ ...prev, [field]: true }));
     
     if (field === 'password') {
@@ -97,6 +116,11 @@ export default function RegisterPage() {
       setEmailTouched(true);
       const emailError = getEmailError(email);
       setFieldErrors(prev => ({ ...prev, email: emailError }));
+    }
+    
+    if (field === 'phone') {
+      const phoneError = validatePhone(phone);
+      setFieldErrors(prev => ({ ...prev, phone: phoneError }));
     }
     
     if (field === 'confirm') {
@@ -120,6 +144,9 @@ export default function RegisterPage() {
     const emailError = getEmailError(email);
     if (emailError) newErrors.email = emailError;
     
+    const phoneError = validatePhone(phone);
+    if (phoneError) newErrors.phone = phoneError;
+    
     const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
       newErrors.password = passwordErrors.join(', ');
@@ -136,6 +163,7 @@ export default function RegisterPage() {
       ...prev, 
       fullName: true, 
       email: true, 
+      phone: true,
       password: true, 
       confirm: true 
     }));
@@ -147,7 +175,7 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const { error, role } = await signUp(email, password, fullName);
+    const { error, role } = await signUp(email, password, fullName, phone);
 
     if (error) {
       setError(error);
@@ -173,6 +201,8 @@ export default function RegisterPage() {
 
   const isEmailValid = emailTouched && email.trim() && validateEmail(email);
   const isEmailInvalid = emailTouched && email.trim() && !validateEmail(email);
+  const isPhoneValid = touched.phone && phone.trim() && /^[0-9]{8}$/.test(phone);
+  const isPhoneInvalid = touched.phone && phone.trim() && !/^[0-9]{8}$/.test(phone);
   const passwordErrors = touched.password ? validatePassword(password) : [];
   const hasPasswordError = touched.password && passwordErrors.length > 0;
   const hasConfirmError = touched.confirm && confirm && password !== confirm;
@@ -205,7 +235,7 @@ export default function RegisterPage() {
     return 'bg-neutral-700/50';
   };
 
-      // Supabase storage URL
+  // Supabase storage URL
   const SUPABASE_URL = 'https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public';
   const BUCKET_NAME = 'images';
   const FOLDER_NAME = 'ambertouch';
@@ -371,6 +401,65 @@ export default function RegisterPage() {
                   >
                     <CheckCircle size={12} />
                     Valid email address
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label htmlFor="phone" className="block text-xs font-medium tracking-[0.15em] uppercase text-neutral-400 mb-2">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  onBlur={() => handleBlur('phone')}
+                  placeholder="Enter 8-digit phone number"
+                  maxLength={8}
+                  inputMode="numeric"
+                  className={`w-full pl-12 pr-12 py-3.5 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                    fieldErrors.phone || isPhoneInvalid
+                      ? 'border-red-500/50 focus:ring-red-500/30 bg-red-500/5'
+                      : isPhoneValid
+                      ? 'border-emerald-500/50 focus:ring-emerald-500/30 bg-emerald-500/5'
+                      : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
+                  }`}
+                />
+                {touched.phone && phone.trim() && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {isPhoneValid ? (
+                      <CheckCircle size={18} className="text-emerald-400" />
+                    ) : isPhoneInvalid ? (
+                      <XCircle size={18} className="text-red-400" />
+                    ) : null}
+                  </span>
+                )}
+              </div>
+              <AnimatePresence>
+                {fieldErrors.phone && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="mt-1.5 text-xs text-red-400 flex items-center gap-1.5"
+                  >
+                    <AlertCircle size={12} />
+                    {fieldErrors.phone}
+                  </motion.p>
+                )}
+                {!fieldErrors.phone && touched.phone && phone.trim() && isPhoneValid && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-1.5 text-xs text-emerald-400 flex items-center gap-1.5"
+                  >
+                    <CheckCircle size={12} />
+                    Valid phone number
                   </motion.p>
                 )}
               </AnimatePresence>
