@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Mail, ArrowLeft, AlertCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+// Remove supabase import since we're not using it
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -49,20 +49,21 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      // Use Supabase's built-in password reset
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Use your custom API for sending reset password email
+      const resetLink = `${window.location.origin}/reset-password`;
+      
+      const response = await fetch('/api/send-reset-password-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, resetLink }),
       });
 
-      if (resetError) {
-        // Handle specific error cases
-        if (resetError.message.includes('User not found')) {
-          setError('No account found with this email address.');
-        } else {
-          setError(resetError.message);
-        }
-        setLoading(false);
-        return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send reset password email');
       }
 
       setSent(true);

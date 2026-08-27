@@ -27,6 +27,8 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log('Checking session...');
+        
         // First, try to get the current session
         const { data, error } = await supabase.auth.getSession();
         
@@ -80,10 +82,10 @@ export default function ResetPasswordPage() {
           }
         }
 
-        // Check for recovery token
+        // Check for token in URL (from your custom email)
         const token = params.get('token');
         if (token) {
-          console.log('Recovery token found');
+          console.log('Token found in URL');
           // Try to use the token to get a session
           const { data: recoveryData, error: recoveryError } = await supabase.auth.exchangeCodeForSession(token);
           if (recoveryData?.session) {
