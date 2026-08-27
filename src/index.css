@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-neutral-800 bg-white antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-8 py-3.5 bg-neutral-900 text-gold-400 text-xs font-medium tracking-widest uppercase transition-all duration-300 hover:bg-gold-400 hover:text-neutral-900 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-8 py-3.5 border border-neutral-900 text-neutral-900 text-xs font-medium tracking-widest uppercase transition-all duration-300 hover:bg-neutral-900 hover:text-white active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center px-8 py-3.5 bg-gold-400 text-neutral-900 text-xs font-medium tracking-widest uppercase transition-all duration-300 hover:bg-gold-300 hover:text-neutral-700 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-black {
+    @apply inline-flex items-center justify-center px-8 py-3.5 bg-neutral-900 text-gold-400 text-xs font-medium tracking-widest uppercase transition-all duration-300 hover:bg-neutral-700 hover:text-gold-300 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-6 py-2.5 text-neutral-700 text-xs font-medium tracking-widest uppercase transition-all duration-300 hover:text-neutral-900 active:scale-95;
+  }
+
+  .label-uppercase {
+    @apply text-xs font-medium tracking-widest uppercase text-neutral-500;
+  }
+
+  .heading-display {
+    @apply font-serif text-5xl md:text-6xl lg:text-7xl font-light leading-tight;
+  }
+
+  .heading-section {
+    @apply font-serif text-3xl md:text-4xl font-light;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-neutral-200 bg-white text-neutral-900 text-sm placeholder-neutral-400 focus:outline-none focus:border-neutral-900 transition-colors duration-200;
+  }
+
+  .input-field-dark {
+    @apply w-full px-4 py-3 border border-neutral-700 bg-neutral-900 text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-neutral-400 transition-colors duration-200;
+  }
+
+  .card-product {
+    @apply cursor-pointer overflow-hidden;
+  }
+
+  .divider {
+    @apply w-12 h-px bg-neutral-900 mx-auto my-4;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 text-xs font-medium tracking-wider uppercase;
+  }
+
+  .badge-sale {
+    @apply badge bg-error-50 text-error-700;
+  }
+
+  .badge-new {
+    @apply badge bg-neutral-900 text-white;
+  }
+
+  .badge-bestseller {
+    @apply badge bg-gold-50 text-gold-700;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Dark mode */
+.dark body {
+  @apply bg-neutral-950 text-neutral-100;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-600;
+}
+
+/* Image zoom */
+.zoom-wrapper {
+  overflow: hidden;
+}
+
+.zoom-wrapper img {
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.zoom-wrapper:hover img {
+  transform: scale(1.05);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.whatsapp-float {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 55px;
+    height: 55px;
+    background: #25D366;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 9999;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+    background: #1ebe5d;
+}
+
+
+/* Prevent horizontal scroll */
+html, body {
+  /*overflow-x: hidden;*/
+  max-width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* For mobile specifically */
+@media (max-width: 768px) {
+  html, body {
+    /*overflow-x: hidden;*/
+    width: 100%;
+    position: relative;
+  }
+}
+
