@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+    const { email, resetLink } = body || {};
 
     if (!email) {
       console.error('Missing required field: email');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft, Key, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,185 +19,14 @@ export default function ResetPasswordPage() {
     password: false,
     confirmPassword: false
   });
-  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Check for session on mount and when URL changes
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        console.log('Checking session...');
-        
-        // First, try to get the current session
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (data?.session) {
-          console.log('Session found');
-          setSessionReady(true);
-          setCheckingSession(false);
-          return;
-        }
-
-        // Check for access_token in URL hash (common for mobile)
-        const hash = window.location.hash;
-        if (hash && hash.includes('access_token')) {
-          console.log('Access token found in hash');
-          const hashParams = new URLSearchParams(hash.replace('#', ''));
-          const accessToken = hashParams.get('access_token');
-          const refreshToken = hashParams.get('refresh_token');
-          
-          if (accessToken) {
-            const { data: setData, error: setError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
-            });
-            
-            if (setData?.session) {
-              console.log('Session set from hash token');
-              setSessionReady(true);
-              setCheckingSession(false);
-              return;
-            }
-            if (setError) {
-              console.error('Set session error:', setError);
-            }
-          }
-        }
-
-        // Check for code in URL (PKCE flow)
-        const params = new URLSearchParams(location.search);
-        const code = params.get('code');
-        if (code) {
-          console.log('Exchange code found');
-          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeData?.session) {
-            console.log('Session set from code exchange');
-            setSessionReady(true);
-            setCheckingSession(false);
-            return;
-          }
-          if (exchangeError) {
-            console.error('Exchange error:', exchangeError);
-          }
-        }
-
-        // Check for token in URL (from your custom email)
-        const token = params.get('token');
-        if (token) {
-          console.log('Token found in URL');
-          // Try to use the token to get a session
-          const { data: recoveryData, error: recoveryError } = await supabase.auth.exchangeCodeForSession(token);
-          if (recoveryData?.session) {
-            console.log('Session set from recovery token');
-            setSessionReady(true);
-            setCheckingSession(false);
-            return;
-          }
-          if (recoveryError) {
-            console.error('Recovery error:', recoveryError);
-          }
-        }
-
-        // If we're on mobile and no session, wait a moment and retry
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isMobile && retryCount < 3) {
-          console.log(`Mobile device, retrying ${retryCount + 1}/3...`);
-          setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-          }, 1500);
-          return;
-        }
-
-        console.log('No session found');
-        setSessionReady(false);
-        setCheckingSession(false);
-      } catch (error) {
-        console.error('Session check error:', error);
-        setSessionReady(false);
-        setCheckingSession(false);
-      }
-    };
-
-    checkSession();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event);
-      
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-        if (session) {
-          console.log('Auth state: session found');
-          setSessionReady(true);
-          setCheckingSession(false);
-        }
-      }
-      
-      if (event === 'SIGNED_OUT') {
-        console.log('Auth state: signed out');
-        setSessionReady(false);
-      }
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionReady(!!data.session);
+      setCheckingSession(false);
     });
-
-    return () => subscription.unsubscribe();
-  }, [location.search, retryCount]);
-
-  // Manual retry function
-  const handleRetry = async () => {
-    setCheckingSession(true);
-    setError('');
-    setRetryCount(0);
-    
-    try {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (data?.session) {
-        setSessionReady(true);
-        setCheckingSession(false);
-        return;
-      }
-
-      // Try to recover from URL hash
-      const hash = window.location.hash;
-      if (hash) {
-        const hashParams = new URLSearchParams(hash.replace('#', ''));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        
-        if (accessToken) {
-          const { data: setData } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          });
-          
-          if (setData?.session) {
-            setSessionReady(true);
-            setCheckingSession(false);
-            return;
-          }
-        }
-      }
-      
-      // Try to recover from URL params
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-      if (code) {
-        const { data: exchangeData } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeData?.session) {
-          setSessionReady(true);
-          setCheckingSession(false);
-          return;
-        }
-      }
-      
-      setSessionReady(false);
-      setCheckingSession(false);
-    } catch (error) {
-      console.error('Retry error:', error);
-      setSessionReady(false);
-      setCheckingSession(false);
-    }
-  };
+  }, []);
 
   const validatePassword = (pass: string) => {
     const errors: string[] = [];
@@ -227,6 +56,7 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError('');
 
+    // Validate password
     const errors = validatePassword(password);
     if (errors.length > 0) {
       setPasswordErrors(errors);
@@ -242,45 +72,14 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true);
-    
-    try {
-      const { error: err } = await supabase.auth.updateUser({ password });
-      
-      if (err) {
-        if (err.message.includes('session') || err.message.includes('token')) {
-          // Session expired, try to refresh
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            setError('Your session has expired. Please request a new password reset link.');
-            setLoading(false);
-            return;
-          }
-          
-          // Retry the update
-          const { error: retryError } = await supabase.auth.updateUser({ password });
-          if (retryError) {
-            setError(retryError.message);
-            setLoading(false);
-            return;
-          }
-        } else {
-          setError(err.message);
-          setLoading(false);
-          return;
-        }
-      }
+    const { error: err } = await supabase.auth.updateUser({ password });
+    setLoading(false);
 
+    if (err) {
+      setError(err.message);
+    } else {
       setSuccess(true);
-      
-      setTimeout(async () => {
-        await supabase.auth.signOut();
-        navigate('/login', { state: { success: 'Password updated successfully! Please sign in with your new password.' } });
-      }, 3000);
-      
-    } catch (error: any) {
-      setError(error.message || 'Failed to update password');
-    } finally {
-      setLoading(false);
+      setTimeout(() => navigate('/login'), 3000);
     }
   };
 
@@ -295,6 +94,7 @@ export default function ResetPasswordPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
+        {/* Back button */}
         <Link 
           to="/login" 
           className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-gold-400 transition-colors duration-300 mb-8 group"
@@ -309,17 +109,6 @@ export default function ResetPasswordPage() {
               <Key size={28} className="text-gold-400 animate-pulse" />
             </div>
             <p className="text-neutral-400">Verifying reset link...</p>
-            <p className="text-xs text-neutral-500 mt-2">Attempt {retryCount + 1} of 3</p>
-            {retryCount > 0 && (
-              <div className="mt-4 w-full bg-neutral-800/50 rounded-full h-1 overflow-hidden">
-                <motion.div 
-                  className="h-full bg-gold-400 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(retryCount / 3) * 100}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-            )}
           </div>
         ) : !sessionReady ? (
           <motion.div
@@ -331,32 +120,15 @@ export default function ResetPasswordPage() {
               <AlertCircle size={32} className="text-red-400" />
             </div>
             <h3 className="text-lg font-medium text-white mb-2">Link Expired or Invalid</h3>
-            <p className="text-sm text-neutral-400 mb-2">
-              The password reset link you used is no longer valid. This can happen if:
+            <p className="text-sm text-neutral-400 mb-6">
+              The password reset link you used is no longer valid. Please request a new one.
             </p>
-            <ul className="text-xs text-neutral-500 text-left space-y-1 mb-6 pl-4 list-disc">
-              <li>The link has already been used</li>
-              <li>The link expired (usually after 24 hours)</li>
-              <li>Your mobile browser handled the link differently</li>
-            </ul>
-            <div className="space-y-3">
-              <button
-                onClick={handleRetry}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gold-400 text-neutral-900 rounded-xl font-medium hover:shadow-lg hover:shadow-gold-400/30 transition-all duration-300 hover:scale-[1.02] w-full justify-center"
-              >
-                <Key size={18} />
-                Try Again
-              </button>
-              <Link 
-                to="/forgot-password" 
-                className="inline-flex items-center gap-2 px-6 py-3 border border-white/10 text-white rounded-xl font-medium hover:bg-white/5 transition-all duration-300 w-full justify-center"
-              >
-                Request New Link
-              </Link>
-              <p className="text-xs text-neutral-500 mt-4">
-                💡 Tip: If you're on mobile, try copying the link and pasting it into your browser (Chrome, Safari, etc.) instead of opening it from your email app.
-              </p>
-            </div>
+            <Link 
+              to="/forgot-password" 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gold-400 text-neutral-900 rounded-xl font-medium hover:shadow-lg hover:shadow-gold-400/30 transition-all duration-300 hover:scale-[1.02]"
+            >
+              Request New Link
+            </Link>
           </motion.div>
         ) : success ? (
           <motion.div
@@ -383,6 +155,7 @@ export default function ResetPasswordPage() {
           </motion.div>
         ) : (
           <>
+            {/* Header */}
             <div className="mb-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold-400/10 border border-gold-400/20 rounded-full mb-4">
                 <Shield size={14} className="text-gold-400" />
@@ -394,11 +167,9 @@ export default function ResetPasswordPage() {
               <p className="text-sm text-neutral-400">
                 Choose a strong password for your account
               </p>
-              <p className="text-xs text-neutral-500 mt-2">
-                💡 Tip: For the best experience on mobile, use your browser instead of the email app.
-              </p>
             </div>
 
+            {/* Error message */}
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -414,6 +185,7 @@ export default function ResetPasswordPage() {
             </AnimatePresence>
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              {/* Password input */}
               <div>
                 <label htmlFor="password" className="block text-xs font-medium tracking-[0.15em] uppercase text-neutral-400 mb-2">
                   New Password
@@ -445,6 +217,7 @@ export default function ResetPasswordPage() {
                   </button>
                 </div>
 
+                {/* Password requirements */}
                 <AnimatePresence>
                   {touched.password && (
                     <motion.div
@@ -486,6 +259,7 @@ export default function ResetPasswordPage() {
                 </AnimatePresence>
               </div>
 
+              {/* Confirm password input */}
               <div>
                 <label htmlFor="confirmPassword" className="block text-xs font-medium tracking-[0.15em] uppercase text-neutral-400 mb-2">
                   Confirm Password
@@ -522,6 +296,7 @@ export default function ResetPasswordPage() {
                   </button>
                 </div>
 
+                {/* Confirm password error */}
                 <AnimatePresence>
                   {hasConfirmError && (
                     <motion.p
@@ -537,6 +312,7 @@ export default function ResetPasswordPage() {
                 </AnimatePresence>
               </div>
 
+              {/* Submit button */}
               <motion.button
                 type="submit"
                 disabled={loading}
@@ -561,6 +337,7 @@ export default function ResetPasswordPage() {
                 )}
               </motion.button>
 
+              {/* Password strength indicator */}
               {password.length > 0 && !loading && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
@@ -608,6 +385,7 @@ export default function ResetPasswordPage() {
           </>
         )}
 
+        {/* Footer */}
         {!success && sessionReady && (
           <div className="mt-8 pt-6 border-t border-neutral-800/50 text-center">
             <p className="text-sm text-neutral-500">
