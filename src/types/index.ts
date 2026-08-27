@@ -7,7 +7,7 @@ export interface User {
   phone: string | null;
   role: 'customer' | 'admin';
   has_used_signup_discount: boolean;
-  avatar_url: string | null;
+  avatar_url?: string | null;
   created_at: string;
 }
 

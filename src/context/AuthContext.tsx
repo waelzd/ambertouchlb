@@ -15,24 +15,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Generate UUID v4
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
-// Simple hash function using Web Crypto API
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<User | null>(null);
@@ -40,53 +22,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
     try {
-      // Check if user already exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .single();
+      // 1. Sign up with Supabase Auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone: phone,
+          },
+        },
+      });
 
-      if (existingUser) {
-        throw new Error('User already exists with this email');
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        throw signUpError;
+      }
+      
+      if (!authData.user) {
+        throw new Error('Failed to create user - no user returned');
       }
 
-      // Generate a new UUID for the user
-      const userId = generateUUID();
-      const hashedPassword = await hashPassword(password);
+      console.log('Auth user created:', authData.user.id);
 
-      // Insert user directly into users table
-      const userData = {
-        id: userId,
-        email: email,
-        password: hashedPassword,
-        full_name: fullName,
-        phone: phone,
-        role: 'customer',
-        has_used_signup_discount: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabase
+      // 2. Insert into your users table using the auth user's ID
+      const { error: profileError } = await supabase
         .from('users')
-        .insert(userData)
-        .select()
-        .single();
+        .insert({
+          id: authData.user.id,
+          email: email,
+          full_name: fullName,
+          phone: phone,
+          role: 'customer',
+          has_used_signup_discount: false,
+        });
 
-      if (error) {
-        console.error('Supabase insert error:', error);
-        throw new Error(error.message || 'Failed to create account');
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        
+        // If there's an error, try to clean up the auth user
+        try {
+          await supabase.auth.admin.deleteUser(authData.user.id);
+        } catch (cleanupError) {
+          console.error('Failed to cleanup auth user:', cleanupError);
+        }
+        
+        throw new Error('Failed to create user profile: ' + profileError.message);
       }
 
-      console.log('User created successfully:', data);
+      console.log('Profile created successfully');
 
-      // Remove password from user object before storing in state
-      const { password: _, ...userWithoutPassword } = data;
+      // 3. Get the complete user data
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
 
-      setAuthUser(userWithoutPassword);
-      setProfile(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      if (fetchError) {
+        console.error('Error fetching user data:', fetchError);
+        // Use the data we have as fallback with all required fields
+        const userFallback: User = {
+          id: authData.user.id,
+          email: email,
+          full_name: fullName,
+          phone: phone,
+          role: 'customer',
+          has_used_signup_discount: false,
+          avatar_url: null,
+          created_at: new Date().toISOString(),
+        };
+        setAuthUser(userFallback);
+        setProfile(userFallback);
+        localStorage.setItem('user', JSON.stringify(userFallback));
+      } else {
+        // Remove password from user object before storing in state
+        const { password, ...userWithoutPassword } = userData;
+        setAuthUser(userWithoutPassword as User);
+        setProfile(userWithoutPassword as User);
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      }
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -95,29 +110,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Get user from database
-      const { data, error } = await supabase
+      // Sign in with Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
+      
+      if (!data.user) throw new Error('No user found');
+
+      console.log('User signed in:', data.user.id);
+
+      // Get user profile from your users table
+      const { data: profileData, error: profileError } = await supabase
         .from('users')
         .select('*')
-        .eq('email', email)
+        .eq('id', data.user.id)
         .single();
 
-      if (error || !data) {
-        throw new Error('Invalid email or password');
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        
+        // If profile doesn't exist, create it
+        if (profileError.code === 'PGRST116') {
+          console.log('Profile not found, creating...');
+          
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: data.user.email || email,
+              full_name: data.user.user_metadata?.full_name || '',
+              phone: data.user.user_metadata?.phone || '',
+              role: 'customer',
+              has_used_signup_discount: false,
+            });
+
+          if (insertError) {
+            console.error('Failed to create profile:', insertError);
+            throw new Error('Failed to create user profile');
+          }
+        } else {
+          throw profileError;
+        }
       }
 
-      // Hash the provided password and compare
-      const hashedInput = await hashPassword(password);
-      
-      if (data.password !== hashedInput) {
-        throw new Error('Invalid email or password');
-      }
+      // Get fresh profile
+      const { data: freshProfile, error: freshError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
 
-      // Remove password from user object before storing
-      const { password: _, ...userWithoutPassword } = data;
-      
-      setAuthUser(userWithoutPassword);
-      setProfile(userWithoutPassword);
+      if (freshError) throw freshError;
+
+      const { password: _password, ...userWithoutPassword } = freshProfile;
+      setAuthUser(userWithoutPassword as User);
+      setProfile(userWithoutPassword as User);
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
     } catch (error) {
       console.error('Error signing in:', error);
@@ -126,9 +179,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    setAuthUser(null);
-    setProfile(null);
-    localStorage.removeItem('user');
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setAuthUser(null);
+      setProfile(null);
+      localStorage.removeItem('user');
+    }
   };
 
   const refreshProfile = async () => {
@@ -143,9 +202,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      const { password: _, ...userWithoutPassword } = data;
-      setAuthUser(userWithoutPassword);
-      setProfile(userWithoutPassword);
+      const { password, ...userWithoutPassword } = data;
+      setAuthUser(userWithoutPassword as User);
+      setProfile(userWithoutPassword as User);
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
     } catch (error) {
       console.error('Error refreshing profile:', error);
@@ -154,18 +213,113 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const checkSession = async () => {
       try {
-        const user = JSON.parse(storedUser);
-        setAuthUser(user);
-        setProfile(user);
-      } catch (e) {
-        console.error('Error parsing stored user:', e);
-        localStorage.removeItem('user');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          console.log('Session found:', session.user.id);
+          
+          // Get user profile from your users table
+          const { data: profileData, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            
+            // If profile doesn't exist, create it
+            if (profileError.code === 'PGRST116') {
+              console.log('Creating profile for existing session...');
+              
+              const { error: insertError } = await supabase
+                .from('users')
+                .insert({
+                  id: session.user.id,
+                  email: session.user.email,
+                  full_name: session.user.user_metadata?.full_name || '',
+                  phone: session.user.user_metadata?.phone || '',
+                  role: 'customer',
+                  has_used_signup_discount: false,
+                });
+
+              if (insertError) {
+                console.error('Failed to create profile:', insertError);
+              } else {
+                // Fetch the newly created profile
+                const { data: newProfile } = await supabase
+                  .from('users')
+                  .select('*')
+                  .eq('id', session.user.id)
+                  .single();
+                
+                if (newProfile) {
+                  const { password, ...userWithoutPassword } = newProfile;
+                  setAuthUser(userWithoutPassword as User);
+                  setProfile(userWithoutPassword as User);
+                  localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+                }
+              }
+            }
+          } else if (profileData) {
+            const { password, ...userWithoutPassword } = profileData;
+            setAuthUser(userWithoutPassword as User);
+            setProfile(userWithoutPassword as User);
+            localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+          }
+        } else {
+          // Check localStorage for user data
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              const user = JSON.parse(storedUser);
+              setAuthUser(user);
+              setProfile(user);
+            } catch (e) {
+              console.error('Error parsing stored user:', e);
+              localStorage.removeItem('user');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event);
+        
+        if (session?.user) {
+          // Refresh profile on auth change
+          const { data: profileData, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileData && !profileError) {
+            const { password, ...userWithoutPassword } = profileData;
+            setAuthUser(userWithoutPassword as User);
+            setProfile(userWithoutPassword as User);
+            localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+          }
+        } else {
+          setAuthUser(null);
+          setProfile(null);
+          localStorage.removeItem('user');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
