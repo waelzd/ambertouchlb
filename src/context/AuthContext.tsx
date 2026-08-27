@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         full_name: fullName,
         email: email,
         phone: phone,
-        role: 'admin',
+        role: 'customer',
         has_used_signup_discount: false,
       })
       .select('role')
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: insertError.message, role: null };
     }
 
-    return { error: null, role: inserted?.role ?? 'admin' };
+    return { error: null, role: inserted?.role ?? 'customer' };
   };
 
   const signOut = async () => {
