@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Mail, ArrowLeft, AlertCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -48,32 +49,20 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      // 1. Send reset password request to Supabase
-      // const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      //   redirectTo: 'https://ambertouch-lb.com/reset-password',
-      // });
-
-      // if (resetError) {
-      //   setError(resetError.message);
-      //   setLoading(false);
-      //   return;
-      // }
-
-      // 2. Send professional email via your SMTP API
-      const resetLink = 'https://ambertouch-lb.com/reset-password';
-      
-      const response = await fetch('/api/send-reset-password-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, resetLink }),
+      // Use Supabase's built-in password reset
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send reset password email');
+      if (resetError) {
+        // Handle specific error cases
+        if (resetError.message.includes('User not found')) {
+          setError('No account found with this email address.');
+        } else {
+          setError(resetError.message);
+        }
+        setLoading(false);
+        return;
       }
 
       setSent(true);
@@ -114,6 +103,9 @@ export default function ForgotPasswordPage() {
           <p className="text-sm text-neutral-400">
             Enter your email address and we'll send you a link to reset your password.
           </p>
+          <p className="text-xs text-neutral-500 mt-2">
+            💡 Tip: For mobile users, we recommend opening the reset link in your browser.
+          </p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -131,6 +123,11 @@ export default function ForgotPasswordPage() {
               <p className="text-sm text-neutral-400">
                 We've sent a password reset link to <span className="text-gold-400">{email}</span>
               </p>
+              <div className="mt-4 p-4 bg-gold-400/5 border border-gold-400/20 rounded-xl">
+                <p className="text-xs text-neutral-500">
+                  📱 <strong>Mobile users:</strong> If the link doesn't open automatically, copy it and paste it into your browser.
+                </p>
+              </div>
               <p className="text-xs text-neutral-500 mt-4">
                 Didn't receive the email? Check your spam folder or try again.
               </p>
@@ -185,10 +182,15 @@ export default function ForgotPasswordPage() {
                       className={`w-full pl-12 pr-4 py-3.5 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-300 ${
                         emailError && touched
                           ? 'border-red-500/50 focus:ring-red-500/30 bg-red-500/5'
+                          : touched && email && !emailError
+                          ? 'border-emerald-500/50 focus:ring-emerald-500/30 bg-emerald-500/5'
                           : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
                       }`}
                       required
                     />
+                    {touched && email && !emailError && (
+                      <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400" />
+                    )}
                   </div>
                   
                   {/* Email validation error */}
@@ -202,6 +204,16 @@ export default function ForgotPasswordPage() {
                       >
                         <AlertCircle size={12} />
                         {emailError}
+                      </motion.p>
+                    )}
+                    {touched && email && !emailError && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-1.5 mt-2 text-xs text-emerald-400"
+                      >
+                        <CheckCircle size={12} />
+                        Valid email address
                       </motion.p>
                     )}
                   </AnimatePresence>
