@@ -34,43 +34,113 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('Failed to create user');
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        throw signUpError;
+      }
+      
+      if (!authData.user) {
+        throw new Error('Failed to create user - no user returned');
+      }
 
-      // 2. Create profile in your users table with the auth user ID
-      const { error: profileError } = await supabase
+      console.log('Auth user created:', authData.user.id);
+
+      // 2. Check if user already exists in users table
+      const { data: existingUser, error: checkError } = await supabase
         .from('users')
-        .insert({
-          id: authData.user.id, // Use the auth user's ID
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 means no rows found, which is fine
+        console.error('Error checking existing user:', checkError);
+      }
+
+      // 3. If user doesn't exist, create profile in users table
+      if (!existingUser) {
+        // Prepare user data
+        const userData = {
+          id: authData.user.id,
           email: email,
           full_name: fullName,
           phone: phone,
           role: 'customer',
+          avatar_url: '',
           has_used_signup_discount: false,
-        });
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        // Attempt to clean up the auth user if profile creation fails
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error('Failed to create user profile');
+        // Insert into users table with explicit column names
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert(userData);
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          
+          // If there's a column error, try without the problematic columns
+          if (profileError.message.includes('column')) {
+            console.log('Trying to insert with minimal fields...');
+            const minimalData = {
+              id: authData.user.id,
+              email: email,
+              full_name: fullName,
+              phone: phone,
+              role: 'customer',
+            };
+            
+            const { error: retryError } = await supabase
+              .from('users')
+              .insert(minimalData);
+              
+            if (retryError) {
+              console.error('Retry failed:', retryError);
+              // Don't throw here, we can still use the auth user
+            } else {
+              console.log('Profile created successfully with minimal fields');
+            }
+          } else {
+            // Non-column error, still try to proceed with auth user
+            console.warn('Profile creation failed, but auth user exists');
+          }
+        } else {
+          console.log('Profile created successfully');
+        }
       }
 
-      // 3. Set user state
-      const userData: User = {
-        id: authData.user.id,
-        email: email,
-        full_name: fullName,
-        phone: phone,
-        role: 'customer',
-        has_used_signup_discount: false,
-        avatar_url: null,
-        created_at: new Date().toISOString(),
-      };
+      // 4. Get the user profile (or create a local user object)
+      const { data: profileData, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
 
+      let userData: User;
+      
+      if (profileData && !profileError) {
+        userData = profileData as User;
+      } else {
+        // Use auth user data as fallback
+        userData = {
+          id: authData.user.id,
+          email: email,
+          full_name: fullName,
+          phone: phone,
+          role: 'customer',
+          avatar_url: '',
+          has_used_signup_discount: false,
+          created_at: new Date().toISOString(),
+        };
+      }
+
+      // 5. Set user state
       setAuthUser(userData);
       setProfile(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      
+      console.log('User signed up successfully:', userData);
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -85,8 +155,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
+      
       if (!data.user) throw new Error('No user found');
+
+      console.log('User signed in:', data.user.id);
 
       // Get user profile from your users table
       const { data: profileData, error: profileError } = await supabase
@@ -95,40 +171,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', data.user.id)
         .single();
 
+      let userData: User;
+
       if (profileError) {
         console.error('Error fetching profile:', profileError);
+        
         // If profile doesn't exist, create it
         if (profileError.code === 'PGRST116') {
+          console.log('Profile not found, creating...');
+          
+          const newUserData = {
+            id: data.user.id,
+            email: data.user.email || email,
+            full_name: data.user.user_metadata?.full_name || '',
+            phone: data.user.user_metadata?.phone || '',
+            role: 'customer',
+            has_used_signup_discount: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
           const { error: insertError } = await supabase
             .from('users')
-            .insert({
+            .insert(newUserData);
+
+          if (insertError) {
+            console.error('Failed to create profile:', insertError);
+            // Use auth data as fallback
+            userData = {
               id: data.user.id,
-              email: data.user.email,
+              email: data.user.email || email,
               full_name: data.user.user_metadata?.full_name || '',
               phone: data.user.user_metadata?.phone || '',
               role: 'customer',
+              avatar_url: '',
               has_used_signup_discount: false,
-            });
-
-          if (insertError) throw insertError;
+              created_at: new Date().toISOString(),
+            };
+          } else {
+            // Fetch the newly created profile
+            const { data: freshProfile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+            
+            userData = freshProfile as User || newUserData;
+          }
         } else {
-          throw profileError;
+          // Use auth data as fallback
+          userData = {
+            id: data.user.id,
+            email: data.user.email || email,
+            full_name: data.user.user_metadata?.full_name || '',
+            phone: data.user.user_metadata?.phone || '',
+            role: 'customer',
+            avatar_url: '',
+            has_used_signup_discount: false,
+            created_at: new Date().toISOString(),
+          };
         }
+      } else {
+        userData = profileData as User;
       }
 
-      // Get fresh profile
-      const { data: freshProfile, error: freshError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-
-      if (freshError) throw freshError;
-
-      const { password: _, ...userWithoutPassword } = freshProfile;
-      setAuthUser(userWithoutPassword);
-      setProfile(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      // Set user state
+      setAuthUser(userData);
+      setProfile(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      console.log('User signed in successfully:', userData);
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
@@ -136,10 +248,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setAuthUser(null);
-    setProfile(null);
-    localStorage.removeItem('user');
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setAuthUser(null);
+      setProfile(null);
+      localStorage.removeItem('user');
+    }
   };
 
   const refreshProfile = async () => {
@@ -169,6 +286,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
+          console.log('Session found:', session.user.id);
+          
           // Get user profile from your users table
           const { data: profileData, error: profileError } = await supabase
             .from('users')
@@ -178,20 +297,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (profileError) {
             console.error('Error fetching profile:', profileError);
+            
             // If profile doesn't exist, create it
             if (profileError.code === 'PGRST116') {
+              console.log('Creating profile for existing session...');
+              
+              const newUserData = {
+                id: session.user.id,
+                email: session.user.email,
+                full_name: session.user.user_metadata?.full_name || '',
+                phone: session.user.user_metadata?.phone || '',
+                role: 'customer',
+                has_used_signup_discount: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              };
+
               const { error: insertError } = await supabase
                 .from('users')
-                .insert({
-                  id: session.user.id,
-                  email: session.user.email,
-                  full_name: session.user.user_metadata?.full_name || '',
-                  phone: session.user.user_metadata?.phone || '',
-                  role: 'customer',
-                  has_used_signup_discount: false,
-                });
+                .insert(newUserData);
 
-              if (!insertError) {
+              if (insertError) {
+                console.error('Failed to create profile:', insertError);
+              } else {
                 // Fetch the newly created profile
                 const { data: newProfile } = await supabase
                   .from('users')
@@ -237,6 +365,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event);
+        
         if (session?.user) {
           // Refresh profile on auth change
           const { data: profileData } = await supabase
