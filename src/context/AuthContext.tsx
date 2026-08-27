@@ -8,8 +8,7 @@ type AuthContextType = {
   profile: User | null;
   isAdmin: boolean;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null; role: string | null }>;
-  signUp: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: string | null; role: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null; role: string | null }>;  signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null; role: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -62,55 +61,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [fetchProfile]);
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message, role: null };
+const signIn = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { error: error.message, role: null };
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', data.user.id)
-      .single();
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', data.user.id)
+    .single();
 
-    return { error: null, role: profile?.role ?? null };
-  };
+  return { error: null, role: profile?.role ?? null };
+};
 
-  // Updated signUp with phone parameter
-  const signUp = async (email: string, password: string, fullName: string, phone: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { 
-          full_name: fullName,
-          phone: phone,
-        },
-      },
-    });
 
-    if (error) return { error: error.message, role: null };
-    if (!data.user) return { error: 'No user returned', role: null };
+// Update the signUp function:
+const signUp = async (email: string, password: string, fullName: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name: fullName },
+    },
+  });
 
-    const { data: inserted, error: insertError } = await supabase
-      .from('users')
-      .insert({
-        id: data.user.id,
-        full_name: fullName,
-        email: email,
-        phone: phone,
-        role: 'admin',
-        has_used_signup_discount: false,
-      })
-      .select('role')
-      .single();
+  if (error) return { error: error.message, role: null };
+  if (!data.user) return { error: 'No user returned', role: null };
 
-    if (insertError) {
-      console.error('Insert error:', insertError.message, insertError.code);
-      return { error: insertError.message, role: null };
-    }
+  const { data: inserted, error: insertError } = await supabase
+    .from('users')
+    .insert({
+      id: data.user.id,
+      full_name: fullName,
+      email: email,
+      role: 'customer',
+    })
+    .select('role')
+    .single();
 
-    return { error: null, role: inserted?.role ?? 'customer' };
-  };
+  if (insertError) {
+    console.error('Insert error:', insertError.message, insertError.code);
+    return { error: insertError.message, role: null };
+  }
+
+  return { error: null, role: inserted?.role ?? 'customer' };
+};
 
   const signOut = async () => {
     await supabase.auth.signOut();
