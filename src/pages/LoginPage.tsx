@@ -2,20 +2,66 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false
+  });
   const { signIn } = useAuth();
   const navigate = useNavigate();
+
+  // Email validation
+  const validateEmail = (value: string) => {
+    if (!value.trim()) return 'Email is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email address';
+    return '';
+  };
+
+  // Password validation
+  const validatePassword = (value: string) => {
+    if (!value.trim()) return 'Password is required';
+    if (value.length < 6) return 'Password must be at least 6 characters';
+    return '';
+  };
+
+  const getEmailError = () => {
+    if (!touched.email) return '';
+    return validateEmail(email);
+  };
+
+  const getPasswordError = () => {
+    if (!touched.password) return '';
+    return validatePassword(password);
+  };
+
+  const emailError = getEmailError();
+  const passwordError = getPasswordError();
+  const isEmailValid = touched.email && email && !emailError;
+  const isPasswordValid = touched.password && password && !passwordError;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate all fields
+    setTouched({ email: true, password: true });
+    
+    const emailErr = validateEmail(email);
+    const passErr = validatePassword(password);
+
+    if (emailErr || passErr) {
+      setError(emailErr || passErr);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -40,7 +86,7 @@ export default function LoginPage() {
           <p className="text-neutral-400 mt-2">Sign in to your AmberTouch account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           {/* Email */}
           <div>
             <label className="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1.5">
@@ -51,42 +97,123 @@ export default function LoginPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (touched.email) {
+                    setError('');
+                  }
+                }}
+                onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
                 required
-                className="w-full pl-11 pr-4 py-3 bg-neutral-800/50 border border-white/10 rounded-xl text-white placeholder:text-neutral-500 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 outline-none transition-all duration-200"
+                className={`w-full pl-11 pr-12 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                  emailError
+                    ? 'border-red-500/50 focus:ring-red-500/30 bg-red-500/5'
+                    : isEmailValid
+                    ? 'border-emerald-500/50 focus:ring-emerald-500/30 bg-emerald-500/5'
+                    : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
+                }`}
                 placeholder="Enter your email"
               />
+              {touched.email && email && !emailError && (
+                <CheckCircle size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400" />
+              )}
+              {emailError && (
+                <AlertCircle size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400" />
+              )}
             </div>
+            <AnimatePresence>
+              {emailError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="mt-1.5 text-xs text-red-400 flex items-center gap-1"
+                >
+                  <AlertCircle size={12} />
+                  {emailError}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-1.5">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-neutral-400 uppercase tracking-wider">
+                Password
+              </label>
+              <Link 
+                to="/forgot-password" 
+                className="text-xs text-gold-400 hover:text-gold-300 transition-colors font-medium"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative">
               <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (touched.password) {
+                    setError('');
+                  }
+                }}
+                onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
                 required
-                className="w-full pl-11 pr-4 py-3 bg-neutral-800/50 border border-white/10 rounded-xl text-white placeholder:text-neutral-500 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 outline-none transition-all duration-200"
+                className={`w-full pl-11 pr-12 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                  passwordError
+                    ? 'border-red-500/50 focus:ring-red-500/30 bg-red-500/5'
+                    : isPasswordValid
+                    ? 'border-emerald-500/50 focus:ring-emerald-500/30 bg-emerald-500/5'
+                    : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
+                }`}
                 placeholder="Enter your password"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+              {touched.password && password && !passwordError && (
+                <CheckCircle size={18} className="absolute right-12 top-1/2 -translate-y-1/2 text-emerald-400" />
+              )}
+              {passwordError && (
+                <AlertCircle size={18} className="absolute right-12 top-1/2 -translate-y-1/2 text-red-400" />
+              )}
             </div>
+            <AnimatePresence>
+              {passwordError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="mt-1.5 text-xs text-red-400 flex items-center gap-1"
+                >
+                  <AlertCircle size={12} />
+                  {passwordError}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-2.5"
-            >
-              <AlertCircle size={16} />
-              {error}
-            </motion.div>
-          )}
+          {/* Error message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-2.5"
+              >
+                <AlertCircle size={16} />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <button
             type="submit"
