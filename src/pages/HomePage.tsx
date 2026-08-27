@@ -22,8 +22,6 @@ export default function HomePage() {
   const [hasUsedDiscount, setHasUsedDiscount] = useState(false);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [hasOrderedBefore, setHasOrderedBefore] = useState(false);
-  const [isCheckingOrder, setIsCheckingOrder] = useState(true);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 600], [0, 150]);
 
@@ -60,52 +58,14 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Check if user has ordered before using order token
-  useEffect(() => {
-    const checkUserOrderStatus = async () => {
-      try {
-        // Check if we have a stored order token in localStorage
-        const orderToken = localStorage.getItem('amberTouchOrderToken');
-        
-        if (orderToken) {
-          // Check if this token exists in shipping_addresses
-          const { data, error } = await supabase
-            .from('shipping_addresses')
-            .select('has_used_discount')
-            .eq('order_token', orderToken)
-            .single();
-
-          if (error) {
-            console.error('Error checking order status:', error);
-            setIsCheckingOrder(false);
-            return;
-          }
-
-          setHasOrderedBefore(data?.has_used_discount || false);
-        } else {
-          // No token means no orders yet
-          setHasOrderedBefore(false);
-        }
-        
-        setIsCheckingOrder(false);
-      } catch (error) {
-        console.error('Error:', error);
-        setIsCheckingOrder(false);
-      }
-    };
-
-    checkUserOrderStatus();
-  }, []);
-
   // Show popup logic
   useEffect(() => {
     // Don't show popup if:
-    // 1. Still checking user status or order status
+    // 1. Still checking user status
     // 2. User is authenticated and has already used the discount
     // 3. User is authenticated and has the discount flag set to true
     // 4. User is an admin (role is 'admin')
-    // 5. User has ordered before (non-authenticated)
-    if (isCheckingUser || isCheckingOrder) return;
+    if (isCheckingUser) return;
 
     // Check if user is admin - don't show popup for admins
     if (authUser && userRole === 'admin') {
@@ -113,24 +73,51 @@ export default function HomePage() {
       return;
     }
 
-    // Check if user has ordered before (via token or auth)
     if (authUser && hasUsedDiscount) {
       setShowPopup(false);
       return;
     }
 
-    if (!authUser && hasOrderedBefore) {
-      setShowPopup(false);
-      return;
+    // Show popup for non-authenticated users or authenticated users who haven't used the discount
+    const hasDismissed = localStorage.getItem('welcomePopupDismissed');
+    if (!hasDismissed) {
+      const timer = setTimeout(() => {
+        setShowPopup(true);
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-
-    // Always show popup on refresh for eligible users
-    setShowPopup(true);
-    
-  }, [authUser, hasUsedDiscount, isCheckingUser, userRole, hasOrderedBefore, isCheckingOrder]);
+  }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
 
   const handleClosePopup = () => {
     setShowPopup(false);
+    localStorage.setItem('welcomePopupDismissed', 'true');
+  };
+
+  // Handle signup and mark discount as used
+  const handleSignUp = async () => {
+    if (authUser) {
+      // Mark the discount as used when user signs up
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ has_used_signup_discount: true })
+          .eq('id', authUser.id);
+
+        if (error) {
+          console.error('Error updating discount status:', error);
+        } else {
+          setHasUsedDiscount(true);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+    
+    setShowPopup(false);
+    localStorage.setItem('welcomePopupDismissed', 'true');
+    
+    // Navigate to register page
+    window.location.href = '/register';
   };
 
   useEffect(() => {
@@ -191,8 +178,8 @@ export default function HomePage() {
     },
     {
       icon: Heart,
-      title: 'Cruelty-Free',
-      description: 'We never test on animals. All our products are 100% cruelty-free and ethically sourced.'
+      title: 'Built with Scent DNA Technology',
+      description: 'Advanced scent analysis for a precise, balanced, and distinctive fragrance.'
     },
     {
       icon: Shield,
@@ -208,10 +195,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal - Shows on every refresh for eligible users */}
-      {!isCheckingUser && !isCheckingOrder && 
+      {/* Popup Modal - Only shown for customers who haven't used the discount */}
+      {!isCheckingUser && 
        !(authUser && (hasUsedDiscount || userRole === 'admin')) && 
-       !(!authUser && hasOrderedBefore) && 
        showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div 
@@ -253,18 +239,31 @@ export default function HomePage() {
                   you choose in your first order!
                 </p>
                 <p className="text-neutral-500 text-xs mt-2">
-                  ✨ Just order now and enjoy your discount!
+                  ✨ Just sign in to our website and order now!
                 </p>
               </div>
 
               <div className="space-y-3">
                 <Link
-                  to="/shop"
-                  onClick={handleClosePopup}
+                  to="/register"
+                  onClick={handleSignUp}
                   className="block w-full py-3.5 bg-gold-400 text-neutral-900 rounded-lg font-medium hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                 >
-                  Shop Now
+                  Sign Up & Get Discount
                 </Link>
+                <Link
+                  to="/shop"
+                  onClick={handleClosePopup}
+                  className="block w-full py-3.5 bg-neutral-950 text-gold-400 rounded-lg font-medium border border-neutral-800 hover:bg-neutral-900 hover:text-gold-400 hover:scale-[1.02] transition-all duration-300"
+                >
+                  Browse Collection
+                </Link>
+                <button
+                  onClick={handleClosePopup}
+                  className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  No thanks, continue shopping
+                </button>
               </div>
 
               <p className="text-[10px] text-neutral-400 mt-4">
