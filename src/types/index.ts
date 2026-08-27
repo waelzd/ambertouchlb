@@ -64,6 +64,7 @@ export interface ShippingAddress {
 export interface Product {
   id: string;
   name: string;
+  slug: string;
   code: number;
   description: string | null;
   price: number;

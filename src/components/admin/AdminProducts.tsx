@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const EMPTY_PRODUCT = {
   name: '', 
+  slug: '',
   description: '', 
   sale_price: '',
   stock_quantity: '5',
@@ -19,7 +20,21 @@ const EMPTY_PRODUCT = {
 const EMPTY_ERRORS = {
   name: false,
   category_id: false,
+  slug: false,
 };
+
+// Slugify function
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+}
 
 // Safely parse a price string to a 2-decimal number, avoiding
 // floating point artifacts like 4 -> 3.999999999999.
@@ -69,18 +84,6 @@ function ImageInput({
       onChange([{ type: 'url', value: '' }]);
     }
   };
-
-  // const updateUrl = (value: string) => {
-  //   if (entries.length > 0 && entries[0].type === 'url') {
-  //     // Update the first URL entry
-  //     const next = [...entries];
-  //     next[0] = { type: 'url', value };
-  //     onChange(next);
-  //   } else {
-  //     // Add new URL entry
-  //     onChange([...entries, { type: 'url', value }]);
-  //   }
-  // };
 
   return (
     <div>
@@ -148,21 +151,6 @@ function ImageInput({
           </div>
         )}
       </div>
-
-      {/* URL Input - Optional 
-      <div className="mt-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-400">Or enter image URL:</span>
-          <input
-            type="url"
-            value={entries.length > 0 && entries[0].type === 'url' ? entries[0].value : ''}
-            onChange={(e) => updateUrl(e.target.value)}
-            placeholder="https://example.com/image.jpg"
-            className="flex-1 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 outline-none transition-all duration-200 text-sm"
-          />
-        </div>
-      </div>
-      */}
 
       <input
         ref={fileRef}
@@ -401,6 +389,7 @@ export default function AdminProducts() {
     setEditingProduct(p);
     setForm({
       name: p.name, 
+      slug: p.slug || '',
       description: p.description ?? '',
       sale_price: p.sale_price?.toString() || '',
       stock_quantity: p.stock_quantity?.toString() || '5',
@@ -423,21 +412,40 @@ export default function AdminProducts() {
     setTouched(prev => ({ ...prev, [field]: true }));
   };
 
+  // Validation functions (same as category page)
+  const validateField = (field: string, value: string) => {
+    if (field === 'name') {
+      if (!value.trim()) return 'Product name is required';
+      if (value.trim().length < 2) return 'Name must be at least 2 characters';
+      if (value.trim().length > 50) return 'Name must be less than 50 characters';
+    }
+    if (field === 'slug') {
+      if (value && !/^[a-z0-9-]+$/.test(value)) return 'Only lowercase letters, numbers, and hyphens allowed';
+    }
+    return '';
+  };
+
+  const getFieldError = (field: string) => {
+    if (!touched[field]) return '';
+    return validateField(field, form[field as keyof typeof form] as string);
+  };
+
+  const isFormValid = () => {
+    const nameError = validateField('name', form.name);
+    const slugError = validateField('slug', form.slug);
+    const categoryError = !form.category_id;
+    return !nameError && !slugError && !categoryError;
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Mark all fields as touched
-    setTouched({ name: true, category_id: true });
+    setTouched({ name: true, slug: true, category_id: true });
 
     const sizesInvalid = sizes.length === 0 || sizes.some(s => !s.label.trim() || !s.price || s.price <= 0);
 
-    const errors = {
-      name: !form.name.trim(),
-      category_id: !form.category_id,
-    };
-
-    if (errors.name || errors.category_id || sizesInvalid) {
-      setFieldErrors(errors);
+    if (!isFormValid() || sizesInvalid) {
       setShowSizeErrors(sizesInvalid);
       return;
     }
@@ -469,8 +477,12 @@ export default function AdminProducts() {
     // Base price is derived from the lowest size price
     const basePrice = Math.min(...cleanedSizes.map(s => s.price));
 
+    // Use slug from form or auto-generate from name
+    const finalSlug = form.slug || slugify(form.name);
+
     const payload = {
-      name: form.name,
+      name: form.name.trim(),
+      slug: finalSlug,
       description: form.description,
       price: basePrice,
       sale_price: form.sale_price ? toMoney(form.sale_price) : null,
@@ -779,39 +791,45 @@ export default function AdminProducts() {
                       <input 
                         value={form.name} 
                         onChange={e => {
-                          setForm(f => ({ ...f, name: e.target.value }));
-                          if (fieldErrors.name && e.target.value.trim()) {
+                          const newName = e.target.value;
+                          setForm(f => ({ ...f, name: newName }));
+                          // Auto-generate slug when name changes and slug is empty or not manually edited
+                          if (!form.slug || !touched.slug) {
+                            const newSlug = slugify(newName);
+                            setForm(f => ({ ...f, slug: newSlug }));
+                          }
+                          if (fieldErrors.name && newName.trim()) {
                             setFieldErrors(f => ({ ...f, name: false }));
                           }
                         }}
                         onBlur={() => handleBlur('name')}
                         placeholder="Enter product name"
                         className={`w-full px-4 py-3 bg-neutral-50 border rounded-xl outline-none transition-all duration-200 text-base ${
-                          (fieldErrors.name || (touched.name && !form.name.trim()))
+                          getFieldError('name') && touched.name
                             ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30'
-                            : touched.name && form.name.trim()
+                            : touched.name && form.name && !getFieldError('name')
                             ? 'border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/30'
                             : 'border-neutral-200 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20'
                         }`}
                       />
-                      {touched.name && form.name.trim() && !fieldErrors.name && (
+                      {touched.name && form.name && !getFieldError('name') && (
                         <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
                       )}
-                      {(fieldErrors.name || (touched.name && !form.name.trim())) && (
+                      {touched.name && getFieldError('name') && (
                         <AlertCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
                       )}
                     </div>
-                    {(fieldErrors.name || (touched.name && !form.name.trim())) && (
+                    {getFieldError('name') && touched.name && (
                       <motion.p 
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-1.5 text-xs text-red-500 flex items-center gap-1"
                       >
                         <AlertCircle size={12} />
-                        Product Name is mandatory
+                        {getFieldError('name')}
                       </motion.p>
                     )}
-                    {touched.name && form.name.trim() && !fieldErrors.name && (
+                    {touched.name && form.name && !getFieldError('name') && (
                       <motion.p 
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -822,6 +840,52 @@ export default function AdminProducts() {
                       </motion.p>
                     )}
                   </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
+                      Slug
+                    </label>
+                    <div className="relative">
+                      <input 
+                        value={form.slug} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, slug: e.target.value }));
+                          if (fieldErrors.slug && e.target.value) {
+                            setFieldErrors(f => ({ ...f, slug: false }));
+                          }
+                        }}
+                        onBlur={() => handleBlur('slug')}
+                        placeholder="auto-generated from name"
+                        className={`w-full px-4 py-3 bg-neutral-50 border rounded-xl outline-none transition-all duration-200 text-base font-mono ${
+                          getFieldError('slug') && touched.slug && form.slug
+                            ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30'
+                            : touched.slug && form.slug && !getFieldError('slug')
+                            ? 'border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/30'
+                            : 'border-neutral-200 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20'
+                        }`}
+                      />
+                      {touched.slug && form.slug && !getFieldError('slug') && (
+                        <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
+                      )}
+                      {touched.slug && form.slug && getFieldError('slug') && (
+                        <AlertCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
+                      )}
+                    </div>
+                    {getFieldError('slug') && touched.slug && form.slug && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-1.5 text-xs text-red-500 flex items-center gap-1"
+                      >
+                        <AlertCircle size={12} />
+                        {getFieldError('slug')}
+                      </motion.p>
+                    )}
+                    <p className="text-xs text-neutral-400 mt-1">
+                      Leave empty to auto-generate from name
+                    </p>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
                       Category <span className="text-red-500">*</span>
@@ -875,6 +939,7 @@ export default function AdminProducts() {
                       </motion.p>
                     )}
                   </div>
+
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
                       Sale Price
@@ -894,6 +959,7 @@ export default function AdminProducts() {
                       className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 outline-none transition-all duration-200 text-base"
                     />
                   </div>
+
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
                       Stock Quantity
@@ -907,6 +973,7 @@ export default function AdminProducts() {
                     />
                     <p className="text-xs text-neutral-400 mt-1">Stock is set to a default of 5</p>
                   </div>              
+
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
                       Description
