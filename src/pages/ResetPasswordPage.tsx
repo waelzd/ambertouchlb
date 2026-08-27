@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft, Key, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,13 +19,114 @@ export default function ResetPasswordPage() {
     password: false,
     confirmPassword: false
   });
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Extract token from URL hash (for recovery mode)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSessionReady(!!data.session);
-      setCheckingSession(false);
+    // Check if we have a hash fragment (Supabase sometimes uses this)
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      // Supabase OAuth flow uses hash fragments
+      console.log('Hash fragment detected, attempting to recover session...');
+    }
+
+    // Check for recovery token in URL parameters
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    if (token) {
+      console.log('Recovery token found in URL');
+    }
+
+    // Try to get session
+    const checkSession = async () => {
+      try {
+        // First attempt: get current session
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (data?.session) {
+          setSessionReady(true);
+          setCheckingSession(false);
+          return;
+        }
+
+        // Second attempt: Try to exchange the code if present (PKCE flow)
+        const code = params.get('code');
+        if (code) {
+          console.log('Exchange code found, attempting to exchange...');
+          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeData?.session) {
+            setSessionReady(true);
+            setCheckingSession(false);
+            return;
+          }
+          if (exchangeError) {
+            console.error('Exchange error:', exchangeError);
+          }
+        }
+
+        // Third attempt: Wait a moment and try again (for mobile browsers)
+        if (retryCount < 2) {
+          console.log(`Retry attempt ${retryCount + 1}...`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            checkSession();
+          }, 1000);
+          return;
+        }
+
+        // If we still don't have a session, try to recover from hash fragment
+        if (hash) {
+          // Parse hash fragment for access_token
+          const hashParams = new URLSearchParams(hash.replace('#', ''));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+          
+          if (accessToken) {
+            console.log('Access token found in hash, attempting to set session...');
+            const { data: setData, error: setError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+            
+            if (setData?.session) {
+              setSessionReady(true);
+              setCheckingSession(false);
+              return;
+            }
+            if (setError) {
+              console.error('Set session error:', setError);
+            }
+          }
+        }
+
+        // If all attempts fail
+        setSessionReady(false);
+        setCheckingSession(false);
+      } catch (error) {
+        console.error('Session check error:', error);
+        setSessionReady(false);
+        setCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, [location.search, retryCount]);
+
+  // Also listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change in reset page:', event);
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        if (session) {
+          setSessionReady(true);
+          setCheckingSession(false);
+        }
+      }
     });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const validatePassword = (pass: string) => {
@@ -72,19 +173,95 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true);
-    const { error: err } = await supabase.auth.updateUser({ password });
-    setLoading(false);
+    
+    try {
+      const { error: err } = await supabase.auth.updateUser({ password });
+      
+      if (err) {
+        // If we get a session error, try to recover
+        if (err.message.includes('session') || err.message.includes('token')) {
+          // Try to refresh the session
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            setError('Your session has expired. Please request a new password reset link.');
+            setLoading(false);
+            return;
+          }
+          
+          // Retry the update
+          const { error: retryError } = await supabase.auth.updateUser({ password });
+          if (retryError) {
+            setError(retryError.message);
+            setLoading(false);
+            return;
+          }
+        } else {
+          setError(err.message);
+          setLoading(false);
+          return;
+        }
+      }
 
-    if (err) {
-      setError(err.message);
-    } else {
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 3000);
+      
+      // Sign out after password change to force re-login
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        navigate('/login', { state: { success: 'Password updated successfully! Please sign in with your new password.' } });
+      }, 3000);
+      
+    } catch (error: any) {
+      setError(error.message || 'Failed to update password');
+    } finally {
+      setLoading(false);
     }
   };
 
   const hasPasswordError = touched.password && passwordErrors.length > 0;
   const hasConfirmError = touched.confirmPassword && confirmPassword && password !== confirmPassword;
+
+  // Manual retry function
+  const handleRetry = async () => {
+    setCheckingSession(true);
+    setError('');
+    
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (data?.session) {
+        setSessionReady(true);
+        setCheckingSession(false);
+        return;
+      }
+      
+      // Try to recover from URL hash
+      const hash = window.location.hash;
+      if (hash) {
+        const hashParams = new URLSearchParams(hash.replace('#', ''));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken) {
+          const { data: setData } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          });
+          
+          if (setData?.session) {
+            setSessionReady(true);
+            setCheckingSession(false);
+            return;
+          }
+        }
+      }
+      
+      setSessionReady(false);
+      setCheckingSession(false);
+    } catch (error) {
+      console.error('Retry error:', error);
+      setSessionReady(false);
+      setCheckingSession(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 flex items-center justify-center px-6 py-12">
@@ -109,6 +286,7 @@ export default function ResetPasswordPage() {
               <Key size={28} className="text-gold-400 animate-pulse" />
             </div>
             <p className="text-neutral-400">Verifying reset link...</p>
+            <p className="text-xs text-neutral-500 mt-2">Attempt {retryCount + 1} of 3</p>
           </div>
         ) : !sessionReady ? (
           <motion.div
@@ -121,14 +299,30 @@ export default function ResetPasswordPage() {
             </div>
             <h3 className="text-lg font-medium text-white mb-2">Link Expired or Invalid</h3>
             <p className="text-sm text-neutral-400 mb-6">
-              The password reset link you used is no longer valid. Please request a new one.
+              The password reset link you used is no longer valid. This can happen if:
+              <br /><br />
+              • The link has already been used<br />
+              • The link expired (usually after 24 hours)<br />
+              • Your mobile browser handled the link differently
             </p>
-            <Link 
-              to="/forgot-password" 
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gold-400 text-neutral-900 rounded-xl font-medium hover:shadow-lg hover:shadow-gold-400/30 transition-all duration-300 hover:scale-[1.02]"
-            >
-              Request New Link
-            </Link>
+            <div className="space-y-3">
+              <button
+                onClick={handleRetry}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gold-400 text-neutral-900 rounded-xl font-medium hover:shadow-lg hover:shadow-gold-400/30 transition-all duration-300 hover:scale-[1.02] w-full justify-center"
+              >
+                <Key size={18} />
+                Try Again
+              </button>
+              <Link 
+                to="/forgot-password" 
+                className="inline-flex items-center gap-2 px-6 py-3 border border-white/10 text-white rounded-xl font-medium hover:bg-white/5 transition-all duration-300 w-full justify-center"
+              >
+                Request New Link
+              </Link>
+              <p className="text-xs text-neutral-500 mt-4">
+                Tip: If you're on mobile, try opening the link in Chrome or Safari browser instead of the email app.
+              </p>
+            </div>
           </motion.div>
         ) : success ? (
           <motion.div
