@@ -80,7 +80,7 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const { error: err, role } = await signIn(email, password);
+    const { error: err } = await signIn(email, password);
 
     if (err) {
       setError(err);
@@ -89,7 +89,7 @@ export default function LoginPage() {
     }
 
     setLoading(false);
-    navigate(role === 'admin' ? '/admin' : '/account');
+    navigate('/admin');
   };
 
   // Clear a field's error as soon as the user starts typing in it
@@ -325,13 +325,6 @@ export default function LoginPage() {
             <a href="/privacy-policy" className="text-gold-400 hover:text-gold-300 transition-colors font-medium">
               Privacy Policy
             </a>
-          </p>
-
-          <p className="mt-6 text-center text-sm text-neutral-400">
-            New here?{' '}
-            <Link to="/register" className="text-gold-400 font-medium hover:text-gold-300 transition-colors">
-              Create account
-            </Link>
           </p>
         </motion.div>
       </div>

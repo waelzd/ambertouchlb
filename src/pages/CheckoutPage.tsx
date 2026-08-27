@@ -322,6 +322,15 @@ export default function CheckoutPage() {
     }
   };
 
+  // Generate a unique order token
+  const generateOrderToken = () => {
+    return crypto.randomUUID ? crypto.randomUUID() : 
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authUser) { 
@@ -413,11 +422,92 @@ export default function CheckoutPage() {
         if (updateError) throw updateError;
       }
 
+      // Generate a unique order token for this order
+      const orderToken = generateOrderToken();
+      
+      // Save the order token to localStorage for future reference
+      localStorage.setItem('amberTouchOrderToken', orderToken);
+
+      // Save shipping address and mark as used discount
+      let shippingAddressId = savedAddress?.id;
+      
       if (!savedAddress || hasChanges) {
-        const addressSaved = await saveAddress(authUser.id, shipping, savedAddress?.id);
-        if (!addressSaved) {
-          console.warn('Order placed successfully, but the shipping address could not be saved for next time.');
+        // Save the address and get the ID
+        const { data: addressData, error: addressError } = await supabase
+          .from('addresses')
+          .insert({
+            user_id: authUser.id,
+            full_name: shipping.full_name.trim(),
+            phone: shipping.phone.trim(),
+            address_line1: shipping.address_line1.trim(),
+            address_line2: shipping.address_line2.trim() || null,
+            city: shipping.city.trim(),
+            postal_code: shipping.postal_code.trim() || null,
+            country: shipping.country,
+          })
+          .select()
+          .single();
+
+        if (addressError) {
+          console.warn('Failed to save address:', addressError);
+        } else {
+          shippingAddressId = addressData.id;
         }
+      }
+
+      // If we have a shipping address ID, update it with the order token and discount flag
+      if (shippingAddressId) {
+        const { error: updateAddressError } = await supabase
+          .from('addresses')
+          .update({
+            order_token: orderToken,
+            has_used_discount: true
+          })
+          .eq('id', shippingAddressId);
+
+        if (updateAddressError) {
+          console.error('Error updating address with order token:', updateAddressError);
+        }
+      }
+
+      // Also try to update any existing shipping_addresses table if it exists
+      try {
+        // Check if shipping_addresses table exists and has the order_token column
+        const { data: shippingData, error: shippingCheckError } = await supabase
+          .from('shipping_addresses')
+          .select('id')
+          .eq('user_id', authUser.id)
+          .limit(1);
+
+        if (!shippingCheckError && shippingData && shippingData.length > 0) {
+          // Update the existing shipping address
+          await supabase
+            .from('shipping_addresses')
+            .update({
+              order_token: orderToken,
+              has_used_discount: true
+            })
+            .eq('user_id', authUser.id);
+        } else if (!shippingCheckError) {
+          // Insert a new shipping address record
+          await supabase
+            .from('shipping_addresses')
+            .insert({
+              user_id: authUser.id,
+              full_name: shipping.full_name.trim(),
+              phone: shipping.phone.trim(),
+              address_line1: shipping.address_line1.trim(),
+              address_line2: shipping.address_line2.trim() || null,
+              city: shipping.city.trim(),
+              postal_code: shipping.postal_code.trim() || null,
+              country: shipping.country,
+              order_token: orderToken,
+              has_used_discount: true
+            });
+        }
+      } catch (shippingError) {
+        console.log('Shipping addresses table may not exist or has different structure:', shippingError);
+        // Continue with the order process even if this fails
       }
 
       if (appliedDiscount > 0) {
