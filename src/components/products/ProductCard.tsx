@@ -26,9 +26,11 @@ export default function ProductCard({ product, index = 0 }: Props) {
   };
 
   // Parse sizes from product.sizes (assuming it's a JSON field)
-  // Example format: [{ "size": "120ML", "price": 25, "sale_price": 19 }, { "size": "60ML", "price": 15, "sale_price": 11 }]
+  // Example format: [{ "label": "120ML", "price": 25, "sale_price": 19 }, { "label": "60ML", "price": 15, "sale_price": 11 }]
   const sizes = product.sizes || [];
-  //const productSlug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  // Use slug for URL, fallback to name if slug doesn't exist
+  const productSlug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   return (
     <motion.div
@@ -37,7 +39,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
       transition={{ delay: index * 0.08, duration: 0.4 }}
       className="group"
     >
-      <Link to={`/product/${encodeURIComponent(product.name)}`}  className="block">
+      <Link to={`/product/${productSlug}`} className="block">
         {/* Image */}
         <div className="relative aspect-[3/4] bg-neutral-800 overflow-hidden rounded-lg">
           <img
@@ -82,7 +84,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
           {/* Show Product Button */}
           <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out px-3 pb-3">
             <Link
-              to={`/product/${encodeURIComponent(product.name)}`} 
+              to={`/product/${productSlug}`}
               className="w-full flex items-center justify-center gap-2 py-3 bg-gold-400 text-neutral-900 rounded-lg font-medium text-sm transition-all duration-300 hover:bg-gold-300 active:scale-[0.98] shadow-lg shadow-gold-400/20 hover:shadow-gold-400/30"
               onClick={(e) => e.stopPropagation()}
             >
@@ -108,10 +110,10 @@ export default function ProductCard({ product, index = 0 }: Props) {
             {(product as any).categories?.name || 'Uncategorized'}
           </p>
 
-        {/* Product Name */}
-        <h3 className="font-serif text-xl font-light text-neutral-200 group-hover:text-gold-400 transition-colors line-clamp-2">
-          {product.name}
-        </h3>
+          {/* Product Name */}
+          <h3 className="font-serif text-xl font-light text-neutral-200 group-hover:text-gold-400 transition-colors line-clamp-2">
+            {product.name}
+          </h3>
           
           {/* Sizes with Prices */}
           {sizes.length > 0 && (

@@ -6,6 +6,19 @@ import type { Category } from '../../types';
 
 const EMPTY = { name: '', slug: '', description: '' };
 
+// Slugify function
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+}
+
 async function uploadCategoryImage(file: File): Promise<string> {
   const ext = file.name.split('.').pop();
   const path = `categories/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -143,9 +156,12 @@ export default function AdminCategories() {
       image_url = imageEntry.value.trim() || null;
     }
 
+    // Use slug from form or auto-generate from name
+    const finalSlug = form.slug || slugify(form.name);
+
     const payload = {
       name: form.name.trim(),
-      slug: form.slug || form.name.toLowerCase().replace(/\s+/g, '-'),
+      slug: finalSlug,
       image_url,
       description: form.description || null,
     };
@@ -405,7 +421,13 @@ export default function AdminCategories() {
                   <div className="relative">
                     <input 
                       value={form.name} 
-                      onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                      onChange={e => {
+                        const newName = e.target.value;
+                        setForm(f => ({ ...f, name: newName }));
+                        // Auto-generate slug from name
+                        const newSlug = slugify(newName);
+                        setForm(f => ({ ...f, slug: newSlug }));
+                      }}
                       onBlur={() => handleBlur('name')}
                       placeholder="Enter category name" 
                       className={`w-full px-4 py-3 bg-neutral-50 border rounded-xl outline-none transition-all duration-200 text-base ${
@@ -446,44 +468,24 @@ export default function AdminCategories() {
                   )}
                 </div>
 
-                {/* Slug */}
+                {/* Slug - Read Only */}
                 <div>
                   <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
-                    Slug
+                    Slug <span className="text-xs text-neutral-400 font-normal">(auto-generated, read-only)</span>
                   </label>
                   <div className="relative">
                     <input 
                       value={form.slug} 
-                      onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
-                      onBlur={() => handleBlur('slug')}
+                      readOnly
                       placeholder="auto-generated from name" 
-                      className={`w-full px-4 py-3 bg-neutral-50 border rounded-xl outline-none transition-all duration-200 text-base font-mono ${
-                        getFieldError('slug') && touched.slug && form.slug
-                          ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30'
-                          : touched.slug && form.slug && !getFieldError('slug')
-                          ? 'border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/30'
-                          : 'border-neutral-200 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20'
-                      }`}
+                      className="w-full px-4 py-3 bg-neutral-100 border border-neutral-200 rounded-xl text-base font-mono text-neutral-600 cursor-not-allowed"
                     />
-                    {touched.slug && form.slug && !getFieldError('slug') && (
-                      <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
-                    )}
-                    {touched.slug && form.slug && getFieldError('slug') && (
-                      <AlertCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
-                    )}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                      <span className="text-xs">🔒</span>
+                    </div>
                   </div>
-                  {getFieldError('slug') && touched.slug && form.slug && (
-                    <motion.p 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-1.5 text-xs text-red-500 flex items-center gap-1"
-                    >
-                      <AlertCircle size={12} />
-                      {getFieldError('slug')}
-                    </motion.p>
-                  )}
                   <p className="text-xs text-neutral-400 mt-1">
-                    Leave empty to auto-generate from name
+                    Slug is automatically generated from the category name and cannot be edited
                   </p>
                 </div>
 

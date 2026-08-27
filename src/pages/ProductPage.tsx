@@ -17,9 +17,8 @@ function resolveImageUrl(url: string): string {
 }
 
 export default function ProductPage() {
-  const { name } = useParams<{ name: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const decodedName = name ? decodeURIComponent(name) : '';
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +37,7 @@ export default function ProductPage() {
   const sizes: ProductSize[] = product?.sizes ?? [];
 
   useEffect(() => {
-    if (!decodedName) {
+    if (!slug) {
       setLoading(false);
       return;
     }
@@ -49,7 +48,7 @@ export default function ProductPage() {
     supabase
       .from('products')
       .select('*, categories(*)')
-      .eq('name', decodedName)
+      .eq('slug', slug)
       .maybeSingle()
       .then(({ data: prod, error }) => {
         if (error) {
@@ -78,7 +77,7 @@ export default function ProductPage() {
         }
         setLoading(false);
       });
-  }, [decodedName]);
+  }, [slug]);
 
   const unitPrice = selectedSize
     ? selectedSize.price
@@ -131,7 +130,7 @@ export default function ProductPage() {
     }
   };
 
-  if (!decodedName) {
+  if (!slug) {
     return <Navigate to="/shop" replace />;
   }
 
@@ -188,113 +187,113 @@ export default function ProductPage() {
       </div>
 
       {/* Main product section */}
-<div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-  <div className="grid lg:grid-cols-2 gap-12 xl:gap-20">
-    {/* Gallery */}
-    <div className="space-y-4">
-      {/* Main Image Container - Reduced height */}
-      <div className="relative aspect-[4/5] bg-neutral-800/30 rounded-2xl overflow-hidden group cursor-pointer">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={activeImage}
-            src={images[activeImage] || ''}
-            alt={product.name}
-            className="w-full h-full object-contain p-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            onClick={() => setZoomed(true)}
-          />
-        </AnimatePresence>
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div className="grid lg:grid-cols-2 gap-12 xl:gap-20">
+          {/* Gallery */}
+          <div className="space-y-4">
+            {/* Main Image Container - Reduced height */}
+            <div className="relative aspect-[4/5] bg-neutral-800/30 rounded-2xl overflow-hidden group cursor-pointer">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={activeImage}
+                  src={images[activeImage] || ''}
+                  alt={product.name}
+                  className="w-full h-full object-contain p-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onClick={() => setZoomed(true)}
+                />
+              </AnimatePresence>
 
-        {/* Nav arrows */}
-        {images.length > 1 && (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveImage(i => (i - 1 + images.length) % images.length);
-              }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveImage(i => (i + 1) % images.length);
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </>
-        )}
+              {/* Nav arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImage(i => (i - 1 + images.length) % images.length);
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImage(i => (i + 1) % images.length);
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </>
+              )}
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setZoomed(true);
-          }}
-          className="absolute top-4 right-4 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
-        >
-          <ZoomIn size={16} />
-        </button>
-
-        {/* Badges */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
-          {hasDiscount && (
-            <motion.span
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="px-4 py-1.5 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full shadow-lg shadow-gold-400/30"
-            >
-              −{discountPercentage}%
-            </motion.span>
-          )}
-        </div>
-
-        {/* Image counter */}
-        {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {images.map((_, i) => (
               <button
-                key={i}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setActiveImage(i);
+                  setZoomed(true);
                 }}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  activeImage === i 
-                    ? 'w-6 bg-gold-400' 
-                    : 'bg-white/30 hover:bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+                className="absolute top-4 right-4 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
+              >
+                <ZoomIn size={16} />
+              </button>
 
-      {/* Thumbnails */}
-      {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-          {images.map((url, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveImage(i)}
-              className={`shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                activeImage === i 
-                  ? 'border-gold-400 shadow-lg shadow-gold-400/20' 
-                  : 'border-white/10 hover:border-white/30'
-              }`}
-            >
-              <img src={url} alt="" className="w-full h-full object-cover" />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+              {/* Badges */}
+              <div className="absolute top-4 left-4 flex flex-col gap-2">
+                {hasDiscount && (
+                  <motion.span
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="px-4 py-1.5 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full shadow-lg shadow-gold-400/30"
+                  >
+                    −{discountPercentage}%
+                  </motion.span>
+                )}
+              </div>
+
+              {/* Image counter */}
+              {images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveImage(i);
+                      }}
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                        activeImage === i 
+                          ? 'w-6 bg-gold-400' 
+                          : 'bg-white/30 hover:bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails */}
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+                {images.map((url, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(i)}
+                    className={`shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                      activeImage === i 
+                        ? 'border-gold-400 shadow-lg shadow-gold-400/20' 
+                        : 'border-white/10 hover:border-white/30'
+                    }`}
+                  >
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Product info */}
           <div className="pt-0 lg:pt-4">
@@ -328,30 +327,30 @@ export default function ProductPage() {
             </div>
 
             <div className="space-y-5">
-             {/* Sizes */}
-{sizes.length > 0 && (
-  <div>
-    <div className="flex items-center justify-between mb-2.5">
-      <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/60">Choose Your Size</p>
-    </div>
-   <div className="grid grid-cols-2 gap-2.5">
-  {sizes.map((s) => (
-    <button
-      key={s.label}
-      onClick={() => setSelectedSize(s)}
-      className={`py-3 px-4 text-sm font-medium rounded-xl border transition-all duration-300 flex items-center justify-between ${
-        selectedSize?.label === s.label
-          ? 'bg-gold-400 text-neutral-900 border-gold-400 shadow-lg shadow-gold-400/20'
-          : 'bg-white/5 text-white/70 border-white/10 hover:border-white/30 hover:bg-white/10'
-      }`}
-    >
-      <span className="font-medium">{s.label}</span>
-      <span className="font-bold">${s.price.toFixed(0)}</span>
-    </button>
-  ))}
-</div>
-  </div>
-)}
+              {/* Sizes */}
+              {sizes.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/60">Choose Your Size</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {sizes.map((s) => (
+                      <button
+                        key={s.label}
+                        onClick={() => setSelectedSize(s)}
+                        className={`py-3 px-4 text-sm font-medium rounded-xl border transition-all duration-300 flex items-center justify-between ${
+                          selectedSize?.label === s.label
+                            ? 'bg-gold-400 text-neutral-900 border-gold-400 shadow-lg shadow-gold-400/20'
+                            : 'bg-white/5 text-white/70 border-white/10 hover:border-white/30 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="font-medium">{s.label}</span>
+                        <span className="font-bold">${s.price.toFixed(0)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quantity */}
               <div>
