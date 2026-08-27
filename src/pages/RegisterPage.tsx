@@ -151,14 +151,12 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    try {
-      await signUp(email, password, fullName, phone);
-      navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account');
-    } finally {
-      setLoading(false);
-    }
+   try {
+  await signUp(email, password, fullName, phone);
+  navigate('/login');
+} catch (err: any) {
+  setError(err.message || 'Failed to create account');
+}
   };
 
   // Password requirements list
