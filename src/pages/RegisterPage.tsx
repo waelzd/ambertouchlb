@@ -30,8 +30,8 @@ export default function RegisterPage() {
   const validateFullName = (value: string) => {
     if (!value.trim()) return 'Full name is required';
     if (!/^[a-zA-Z\s]+$/.test(value.trim())) return 'Only letters and spaces allowed';
-    if (value.trim().length < 6) return 'Full name must be at least 6 characters';
-    if (value.trim().length > 20) return 'Full name must be less than 20 characters';
+    if (value.trim().length < 2) return 'Name must be at least 2 characters';
+    if (value.trim().length > 50) return 'Name must be less than 50 characters';
     return '';
   };
 
@@ -151,12 +151,14 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-   try {
-  await signUp(email, password, fullName, phone);
-  navigate('/login');
-} catch (err: any) {
-  setError(err.message || 'Failed to create account');
-}
+    try {
+      await signUp(email, password, fullName, phone);
+      navigate('/login');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Password requirements list
