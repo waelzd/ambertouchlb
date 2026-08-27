@@ -3,11 +3,25 @@ export interface User {
   id: string;
   full_name: string;
   email: string;
+  password?: string;
   phone: string | null;
   role: 'customer' | 'admin';
-    has_used_signup_discount: boolean;
+  has_used_signup_discount: boolean;
   avatar_url: string | null;
   created_at: string;
+}
+
+// For registration
+export interface RegisterData {
+  email: string;
+  password: string;
+  full_name?: string;
+}
+
+// For login
+export interface LoginData {
+  email: string;
+  password: string;
 }
 
 export interface ProductSize {

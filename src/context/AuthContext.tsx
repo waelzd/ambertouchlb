@@ -1,138 +1,175 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User as AuthUser } from '@supabase/supabase-js';
+// context/AuthContext.tsx
+import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User } from '../types';
 
-type AuthContextType = {
-  authUser: AuthUser | null;
+interface AuthContextType {
+  authUser: User | null;
   profile: User | null;
-  isAdmin: boolean;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null; role: string | null }>;  signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null; role: string | null }>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-};
+}
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-    setProfile(data);
-  }, []);
+  // Hash password using bcrypt or a simple hash function
+  const hashPassword = async (password: string): Promise<string> => {
+    // Using bcryptjs for hashing
+    const bcrypt = await import('bcryptjs');
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(password, salt);
+  };
 
-  useEffect(() => {
-    let mounted = true;
+  const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
+    const bcrypt = await import('bcryptjs');
+    return bcrypt.compare(password, hashedPassword);
+  };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      setAuthUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => {
-          if (mounted) setLoading(false);
-        });
-      } else {
-        setLoading(false);
+  const signUp = async (email: string, password: string, fullName: string) => {
+    try {
+      // Check if user already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        throw new Error('User already exists with this email');
       }
-    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      setAuthUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
+      // Hash the password
+      const hashedPassword = await hashPassword(password);
+
+      // Insert user into database
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          email,
+          password: hashedPassword,
+          full_name: fullName,
+          role: 'customer',
+          has_used_signup_discount: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Set user and profile
+      setAuthUser(data);
+      setProfile(data);
+      
+      // Store user info in localStorage (optional)
+      localStorage.setItem('user', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      // Get user from database
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (error || !data) {
+        throw new Error('Invalid email or password');
       }
-    });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [fetchProfile]);
+      // Verify password
+      const isValid = await verifyPassword(password, data.password);
+      
+      if (!isValid) {
+        throw new Error('Invalid email or password');
+      }
 
-const signIn = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: error.message, role: null };
-
-  const { data: profile } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', data.user.id)
-    .single();
-
-  return { error: null, role: profile?.role ?? null };
-};
-
-
-// Update the signUp function:
-const signUp = async (email: string, password: string, fullName: string) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: fullName },
-    },
-  });
-
-  if (error) return { error: error.message, role: null };
-  if (!data.user) return { error: 'No user returned', role: null };
-
-  const { data: inserted, error: insertError } = await supabase
-    .from('users')
-    .insert({
-      id: data.user.id,
-      full_name: fullName,
-      email: email,
-      role: 'customer',
-    })
-    .select('role')
-    .single();
-
-  if (insertError) {
-    console.error('Insert error:', insertError.message, insertError.code);
-    return { error: insertError.message, role: null };
-  }
-
-  return { error: null, role: inserted?.role ?? 'customer' };
-};
+      // Remove password from user object before storing
+      const { password: _, ...userWithoutPassword } = data;
+      
+      setAuthUser(userWithoutPassword);
+      setProfile(userWithoutPassword);
+      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    setAuthUser(null);
+    setProfile(null);
+    localStorage.removeItem('user');
   };
 
   const refreshProfile = async () => {
-    if (authUser) await fetchProfile(authUser.id);
+    if (!authUser) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error) throw error;
+      
+      const { password: _, ...userWithoutPassword } = data;
+      setAuthUser(userWithoutPassword);
+      setProfile(userWithoutPassword);
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
   };
 
+  // Check for existing session on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        setAuthUser(user);
+        setProfile(user);
+      } catch (e) {
+        console.error('Error parsing stored user:', e);
+      }
+    }
+    setLoading(false);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{
-      authUser,
-      profile,
-      isAdmin: profile?.role === 'admin',
-      loading,
-      signIn,
-      signUp,
-      signOut,
-      refreshProfile,
-    }}>
+    <AuthContext.Provider
+      value={{
+        authUser,
+        profile,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }
