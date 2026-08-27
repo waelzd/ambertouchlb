@@ -20,81 +20,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Hash password using bcrypt or a simple hash function
-  const hashPassword = async (password: string): Promise<string> => {
-    try {
-      // Using bcryptjs for hashing
-      const bcrypt = await import('bcryptjs');
-      const salt = await bcrypt.genSalt(10);
-      return bcrypt.hash(password, salt);
-    } catch (error) {
-      console.error('Error hashing password:', error);
-      // Fallback to a simpler hash if bcrypt fails
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-  };
-
-  const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
-    try {
-      // Try bcrypt first
-      const bcrypt = await import('bcryptjs');
-      return bcrypt.compare(password, hashedPassword);
-    } catch (error) {
-      // Fallback to SHA-256 comparison
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      return hashedInput === hashedPassword;
-    }
-  };
-
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
     try {
-      // Check if user already exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .single();
+      // 1. Sign up with Supabase Auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone: phone,
+          },
+        },
+      });
 
-      if (existingUser) {
-        throw new Error('User already exists with this email');
-      }
+      if (signUpError) throw signUpError;
+      if (!authData.user) throw new Error('Failed to create user');
 
-      // Hash the password
-      const hashedPassword = await hashPassword(password);
-
-      // Insert user into database with phone number
-      const { data, error } = await supabase
+      // 2. Create profile in your users table with the auth user ID
+      const { error: profileError } = await supabase
         .from('users')
         .insert({
-          email,
-          password: hashedPassword,
+          id: authData.user.id, // Use the auth user's ID
+          email: email,
           full_name: fullName,
           phone: phone,
           role: 'customer',
           has_used_signup_discount: false,
-        })
-        .select()
-        .single();
+        });
 
-      if (error) {
-        console.error('Supabase insert error:', error);
-        throw new Error(error.message || 'Failed to create account');
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // Attempt to clean up the auth user if profile creation fails
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        throw new Error('Failed to create user profile');
       }
 
-      // Remove password from user object
-      const { password: _, ...userWithoutPassword } = data;
-      
-      setAuthUser(userWithoutPassword);
-      setProfile(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      // 3. Set user state
+      const userData: User = {
+        id: authData.user.id,
+        email: email,
+        full_name: fullName,
+        phone: phone,
+        role: 'customer',
+        has_used_signup_discount: false,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+      };
+
+      setAuthUser(userData);
+      setProfile(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -103,27 +79,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Get user from database
-      const { data, error } = await supabase
+      // Sign in with Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      if (!data.user) throw new Error('No user found');
+
+      // Get user profile from your users table
+      const { data: profileData, error: profileError } = await supabase
         .from('users')
         .select('*')
-        .eq('email', email)
+        .eq('id', data.user.id)
         .single();
 
-      if (error || !data) {
-        throw new Error('Invalid email or password');
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        // If profile doesn't exist, create it
+        if (profileError.code === 'PGRST116') {
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: data.user.email,
+              full_name: data.user.user_metadata?.full_name || '',
+              phone: data.user.user_metadata?.phone || '',
+              role: 'customer',
+              has_used_signup_discount: false,
+            });
+
+          if (insertError) throw insertError;
+        } else {
+          throw profileError;
+        }
       }
 
-      // Verify password
-      const isValid = await verifyPassword(password, data.password);
-      
-      if (!isValid) {
-        throw new Error('Invalid email or password');
-      }
+      // Get fresh profile
+      const { data: freshProfile, error: freshError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
 
-      // Remove password from user object before storing
-      const { password: _, ...userWithoutPassword } = data;
-      
+      if (freshError) throw freshError;
+
+      const { password: _, ...userWithoutPassword } = freshProfile;
       setAuthUser(userWithoutPassword);
       setProfile(userWithoutPassword);
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
@@ -134,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    await supabase.auth.signOut();
     setAuthUser(null);
     setProfile(null);
     localStorage.removeItem('user');
@@ -151,9 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      const { password: _, ...userWithoutPassword } = data;
-      setAuthUser(userWithoutPassword);
-      setProfile(userWithoutPassword);
+      setAuthUser(data);
+      setProfile(data);
+      localStorage.setItem('user', JSON.stringify(data));
     } catch (error) {
       console.error('Error refreshing profile:', error);
     }
@@ -161,18 +164,101 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const checkSession = async () => {
       try {
-        const user = JSON.parse(storedUser);
-        setAuthUser(user);
-        setProfile(user);
-      } catch (e) {
-        console.error('Error parsing stored user:', e);
-        localStorage.removeItem('user');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Get user profile from your users table
+          const { data: profileData, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            // If profile doesn't exist, create it
+            if (profileError.code === 'PGRST116') {
+              const { error: insertError } = await supabase
+                .from('users')
+                .insert({
+                  id: session.user.id,
+                  email: session.user.email,
+                  full_name: session.user.user_metadata?.full_name || '',
+                  phone: session.user.user_metadata?.phone || '',
+                  role: 'customer',
+                  has_used_signup_discount: false,
+                });
+
+              if (!insertError) {
+                // Fetch the newly created profile
+                const { data: newProfile } = await supabase
+                  .from('users')
+                  .select('*')
+                  .eq('id', session.user.id)
+                  .single();
+                
+                if (newProfile) {
+                  setAuthUser(newProfile);
+                  setProfile(newProfile);
+                  localStorage.setItem('user', JSON.stringify(newProfile));
+                }
+              }
+            }
+          } else if (profileData) {
+            setAuthUser(profileData);
+            setProfile(profileData);
+            localStorage.setItem('user', JSON.stringify(profileData));
+          }
+        } else {
+          // Check localStorage for user data
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              const user = JSON.parse(storedUser);
+              setAuthUser(user);
+              setProfile(user);
+            } catch (e) {
+              console.error('Error parsing stored user:', e);
+              localStorage.removeItem('user');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          // Refresh profile on auth change
+          const { data: profileData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileData) {
+            setAuthUser(profileData);
+            setProfile(profileData);
+            localStorage.setItem('user', JSON.stringify(profileData));
+          }
+        } else {
+          setAuthUser(null);
+          setProfile(null);
+          localStorage.removeItem('user');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
