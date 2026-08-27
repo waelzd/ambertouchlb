@@ -412,7 +412,7 @@ export default function AdminProducts() {
     setTouched(prev => ({ ...prev, [field]: true }));
   };
 
-  // Validation functions (same as category page)
+  // Validation functions
   const validateField = (field: string, value: string) => {
     if (field === 'name') {
       if (!value.trim()) return 'Product name is required';
@@ -477,16 +477,8 @@ export default function AdminProducts() {
     // Base price is derived from the lowest size price
     const basePrice = Math.min(...cleanedSizes.map(s => s.price));
 
-    // For new products, always auto-generate slug from name
-    // For editing, use the slug from form (which can be edited)
-    let finalSlug;
-    if (editingProduct) {
-      // On edit, use the slug from the form (user can edit it)
-      finalSlug = form.slug || slugify(form.name);
-    } else {
-      // On create, auto-generate from name
-      finalSlug = slugify(form.name);
-    }
+    // Use slug from form or auto-generate from name
+    const finalSlug = form.slug || slugify(form.name);
 
     const payload = {
       name: form.name.trim(),
@@ -801,11 +793,9 @@ export default function AdminProducts() {
                         onChange={e => {
                           const newName = e.target.value;
                           setForm(f => ({ ...f, name: newName }));
-                          // Auto-generate slug on create only
-                          if (!editingProduct) {
-                            const newSlug = slugify(newName);
-                            setForm(f => ({ ...f, slug: newSlug }));
-                          }
+                          // Auto-generate slug from name on both create and update
+                          const newSlug = slugify(newName);
+                          setForm(f => ({ ...f, slug: newSlug }));
                           if (fieldErrors.name && newName.trim()) {
                             setFieldErrors(f => ({ ...f, name: false }));
                           }
@@ -851,66 +841,19 @@ export default function AdminProducts() {
 
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
-                      Slug {!editingProduct && <span className="text-xs text-neutral-400 font-normal">(auto-generated)</span>}
-                      {editingProduct && <span className="text-xs text-neutral-400 font-normal">(editable)</span>}
+                      Slug <span className="text-xs text-neutral-400 font-normal">(auto-generated from name)</span>
                     </label>
                     <div className="relative">
                       <input 
                         value={form.slug} 
-                        onChange={e => {
-                          // Only allow editing on update
-                          if (editingProduct) {
-                            setForm(f => ({ ...f, slug: e.target.value }));
-                            if (fieldErrors.slug && e.target.value) {
-                              setFieldErrors(f => ({ ...f, slug: false }));
-                            }
-                          }
-                        }}
-                        onBlur={() => handleBlur('slug')}
+                        readOnly
                         placeholder="auto-generated from name"
-                        readOnly={!editingProduct}
-                        className={`w-full px-4 py-3 bg-neutral-50 border rounded-xl outline-none transition-all duration-200 text-base font-mono ${
-                          !editingProduct ? 'bg-neutral-100 cursor-not-allowed text-neutral-600' : ''
-                        } ${
-                          getFieldError('slug') && touched.slug && form.slug && editingProduct
-                            ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30'
-                            : touched.slug && form.slug && !getFieldError('slug') && editingProduct
-                            ? 'border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/30'
-                            : 'border-neutral-200 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20'
-                        }`}
+                        className="w-full px-4 py-3 bg-neutral-100 border border-neutral-200 rounded-xl text-base font-mono text-neutral-600 cursor-not-allowed"
                       />
-                      {!editingProduct && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                          <span className="text-xs">🔒</span>
-                        </div>
-                      )}
-                      {editingProduct && touched.slug && form.slug && !getFieldError('slug') && (
-                        <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
-                      )}
-                      {editingProduct && touched.slug && form.slug && getFieldError('slug') && (
-                        <AlertCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
-                      )}
                     </div>
-                    {getFieldError('slug') && touched.slug && form.slug && editingProduct && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-1.5 text-xs text-red-500 flex items-center gap-1"
-                      >
-                        <AlertCircle size={12} />
-                        {getFieldError('slug')}
-                      </motion.p>
-                    )}
-                    {!editingProduct && (
-                      <p className="text-xs text-neutral-400 mt-1">
-                        Slug is automatically generated from the product name and cannot be edited on creation
-                      </p>
-                    )}
-                    {editingProduct && (
-                      <p className="text-xs text-neutral-400 mt-1">
-                        You can edit the slug for this product
-                      </p>
-                    )}
+                    <p className="text-xs text-neutral-400 mt-1">
+                      Slug is automatically generated from the product name
+                    </p>
                   </div>
 
                   <div>

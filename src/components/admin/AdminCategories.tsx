@@ -480,9 +480,6 @@ export default function AdminCategories() {
                       placeholder="auto-generated from name" 
                       className="w-full px-4 py-3 bg-neutral-100 border border-neutral-200 rounded-xl text-base font-mono text-neutral-600 cursor-not-allowed"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                      <span className="text-xs">🔒</span>
-                    </div>
                   </div>
                   <p className="text-xs text-neutral-400 mt-1">
                     Slug is automatically generated from the category name and cannot be edited

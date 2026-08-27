@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
     try {
       // 1. Send reset password request to Supabase
       // const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      //   redirectTo: 'https://ambertouchlb.vercel.app/reset-password',
+      //   redirectTo: 'https://ambertouch-lb.com/reset-password',
       // });
 
       // if (resetError) {
@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
       // }
 
       // 2. Send professional email via your SMTP API
-      const resetLink = 'https://ambertouchlb.vercel.app/reset-password';
+      const resetLink = 'https://ambertouch-lb.com/reset-password';
       
       const response = await fetch('/api/send-reset-password-email', {
         method: 'POST',
