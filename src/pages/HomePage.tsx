@@ -35,7 +35,7 @@ export default function HomePage() {
 
       try {
         const { data, error } = await supabase
-          .from('profiles')
+          .from('users')
           .select('has_used_signup_discount, role')
           .eq('id', authUser.id)
           .single();
@@ -99,7 +99,7 @@ export default function HomePage() {
       // Mark the discount as used when user signs up
       try {
         const { error } = await supabase
-          .from('profiles')
+          .from('users')
           .update({ has_used_signup_discount: true })
           .eq('id', authUser.id);
 
