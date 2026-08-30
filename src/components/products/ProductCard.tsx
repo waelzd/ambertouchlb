@@ -26,11 +26,30 @@ export default function ProductCard({ product, index = 0 }: Props) {
   };
 
   // Parse sizes from product.sizes (assuming it's a JSON field)
-  // Example format: [{ "label": "120ML", "price": 25, "sale_price": 19 }, { "label": "60ML", "price": 15, "sale_price": 11 }]
   const sizes = product.sizes || [];
 
   // Use slug for URL, fallback to name if slug doesn't exist
   const productSlug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  // Handle categories - could be array or single object
+  const getCategories = () => {
+    const categories = (product as any).categories;
+    
+    // If categories is an array
+    if (Array.isArray(categories)) {
+      return categories;
+    }
+    
+    // If categories is a single object
+    if (categories && typeof categories === 'object') {
+      return [categories];
+    }
+    
+    return [];
+  };
+
+  const categories = getCategories();
+  //const primaryCategory = categories.length > 0 ? categories[0] : null;
 
   return (
     <motion.div
@@ -105,10 +124,29 @@ export default function ProductCard({ product, index = 0 }: Props) {
 
         {/* Info */}
         <div className="pt-4 space-y-1.5">
-          {/* Category */}
-          <p className="text-[10px] font-medium tracking-wider uppercase text-gold-400">
-            {(product as any).categories?.name || 'Uncategorized'}
-          </p>
+          {/* Category - Display first category or multiple */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {categories.length > 0 ? (
+              categories.slice(0, 2).map((cat: any, idx: number) => (
+                <span 
+                  key={cat.id || idx}
+                  className="text-[10px] font-medium tracking-wider uppercase text-gold-400"
+                >
+                  {cat.name}
+                  {idx < Math.min(categories.length, 2) - 1 && ' • '}
+                </span>
+              ))
+            ) : (
+              <span className="text-[10px] font-medium tracking-wider uppercase text-neutral-500">
+                Uncategorized
+              </span>
+            )}
+            {categories.length > 2 && (
+              <span className="text-[10px] font-medium tracking-wider uppercase text-gold-400/60">
+                +{categories.length - 2}
+              </span>
+            )}
+          </div>
 
           {/* Product Name */}
           <h3 className="font-serif text-xl font-light text-neutral-200 group-hover:text-gold-400 transition-colors line-clamp-2">
