@@ -1,4 +1,4 @@
-// api/send-verification-email.js
+// api/resend-verification-code.js
 import nodemailer from 'nodemailer';
 import { supabase } from '../lib/supabase.js';
 
@@ -17,41 +17,80 @@ export default async function handler(req, res) {
     const { email, fullName } = body || {};
 
     if (!email) {
-      console.error('Missing email field');
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    console.log('📧 Sending verification email to:', email);
+    console.log('📧 Resending verification email to:', email);
 
-    // Generate verification code
-    const verificationCode = generateVerificationCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
-
-    // Delete any existing unverified codes for this email
-    await supabase
+    // Check if there's already an unverified code for this email
+    const { data: existingCodes, error: fetchError } = await supabase
       .from('verification_codes')
-      .delete()
+      .select('*')
       .eq('email', email)
-      .eq('verified', false);
+      .eq('verified', false)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-    // Store verification code in database
-    const { error: insertError } = await supabase
-      .from('verification_codes')
-      .insert([
-        { 
-          email, 
-          code: verificationCode, 
-          expires_at: expiresAt.toISOString(),
-          created_at: new Date().toISOString()
-        }
-      ]);
-
-    if (insertError) {
-      console.error('Error storing verification code:', insertError);
-      throw new Error('Failed to store verification code');
+    if (fetchError) {
+      console.error('Database error:', fetchError);
+      return res.status(500).json({ error: 'Database error occurred' });
     }
 
-    console.log('✅ Verification code stored in database:', verificationCode);
+    let verificationCode;
+    let expiresAt;
+    
+    if (existingCodes && existingCodes.length > 0) {
+      const existing = existingCodes[0];
+      const now = new Date();
+      const existingExpiresAt = new Date(existing.expires_at);
+      
+      if (now < existingExpiresAt) {
+        // Reuse the existing code if it's still valid
+        verificationCode = existing.code;
+        expiresAt = existingExpiresAt;
+        console.log('✅ Reusing existing valid code:', verificationCode);
+      } else {
+        // Generate new code
+        verificationCode = generateVerificationCode();
+        expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        
+        // Delete old expired codes
+        await supabase
+          .from('verification_codes')
+          .delete()
+          .eq('email', email)
+          .eq('verified', false);
+        
+        // Insert new code
+        await supabase
+          .from('verification_codes')
+          .insert([
+            { 
+              email, 
+              code: verificationCode, 
+              expires_at: expiresAt.toISOString(),
+              created_at: new Date().toISOString()
+            }
+          ]);
+        console.log('✅ Generated new code:', verificationCode);
+      }
+    } else {
+      // Generate new code
+      verificationCode = generateVerificationCode();
+      expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      
+      await supabase
+        .from('verification_codes')
+        .insert([
+          { 
+            email, 
+            code: verificationCode, 
+            expires_at: expiresAt.toISOString(),
+            created_at: new Date().toISOString()
+          }
+        ]);
+      console.log('✅ Generated new code:', verificationCode);
+    }
 
     // Setup email transporter
     const transporter = nodemailer.createTransport({
@@ -63,18 +102,17 @@ export default async function handler(req, res) {
     });
 
     await transporter.verify();
-    console.log('✅ SMTP connection verified');
 
     // HTML email template
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 20px; background: #ffffff; border: 1px solid #e8e8e8; border-radius: 6px;">
         <div style="border-bottom: 2px solid #d4a574; padding: 16px 0 12px; margin-bottom: 20px;">
           <h1 style="font-size: 20px; color: #333; margin: 0; font-weight: 400;">Amber Touch</h1>
-          <p style="font-size: 12px; color: #888; margin: 2px 0 0;">Email Verification</p>
+          <p style="font-size: 12px; color: #888; margin: 2px 0 0;">New Verification Code</p>
         </div>
         
         <p style="font-size: 16px; color: #333; margin: 0 0 4px;">Dear ${fullName || 'Customer'},</p>
-        <p style="font-size: 14px; color: #555; margin: 0 0 20px;">Thank you for creating an account with Amber Touch. Please verify your email address using the code below:</p>
+        <p style="font-size: 14px; color: #555; margin: 0 0 20px;">Here is your new verification code for Amber Touch:</p>
         
         <div style="background: #f7f7f7; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px dashed #d4a574;">
           <p style="margin: 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px;">Verification Code</p>
@@ -82,37 +120,22 @@ export default async function handler(req, res) {
           <p style="margin: 8px 0 0; font-size: 12px; color: #999;">This code expires in 10 minutes</p>
         </div>
         
-        <div style="background: #f7f7f7; padding: 12px 14px; border-radius: 4px; margin: 16px 0;">
-          <p style="margin: 0; font-size: 12px; color: #888;">Why verify?</p>
-          <p style="margin: 4px 0 0; font-size: 13px; color: #555; line-height: 1.5;">
-            ✅ Secure your account<br>
-            ✅ Access exclusive offers<br>
-            ✅ Track your orders<br>
-            ✅ Get personalized recommendations
-          </p>
-        </div>
-        
-        <p style="font-size: 13px; color: #555; margin: 16px 0 4px;">If you didn't create an account with Amber Touch, please ignore this email.</p>
-        
         <div style="text-align: center; border-top: 1px solid #eee; padding-top: 12px; margin-top: 16px;">
           <p style="margin: 0; font-size: 11px; color: #aaa;">Amber Touch • Luxury Fragrances</p>
-          <p style="margin: 2px 0 0; font-size: 11px; color: #bbb;">${new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
       </div>
     `;
 
-    // Plain text version
     const text = `
   ════════════════════════════════════════
           AMBER TOUCH
   ════════════════════════════════════════
 
-  Email Verification
+  New Verification Code
 
   Dear ${fullName || 'Customer'},
 
-  Thank you for creating an account with Amber Touch.
-  Please verify your email address using the code below:
+  Here is your new verification code:
 
   ────────────────────────────────────────
         VERIFICATION CODE
@@ -121,34 +144,24 @@ export default async function handler(req, res) {
   
   This code expires in 10 minutes.
 
-  Why verify?
-  ✅ Secure your account
-  ✅ Access exclusive offers
-  ✅ Track your orders
-  ✅ Get personalized recommendations
-
-  If you didn't create an account with Amber Touch,
-  please ignore this email.
-
   ════════════════════════════════════════
   Amber Touch • Luxury Fragrances
-  ${new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
   `;
 
     try {
       const info = await transporter.sendMail({
         from: `"Amber Touch" <${process.env.SMTP_USER || 'ambertouch2026@gmail.com'}>`,
         to: email,
-        subject: 'Verify Your Amber Touch Account',
+        subject: 'New Verification Code - Amber Touch',
         html: html,
         text: text,
       });
       
-      console.log('✅ Verification email sent:', info.messageId);
+      console.log('✅ Resent verification email:', info.messageId);
       
       return res.status(200).json({
         success: true,
-        message: 'Verification email sent successfully',
+        message: 'Verification code resent successfully',
         messageId: info.messageId
       });
     } catch (error) {

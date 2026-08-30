@@ -1,6 +1,5 @@
 // api/verify-code.js
-// This stores verification codes in memory (will reset on server restart)
-const verificationStore = {};
+import { supabase } from '../lib/supabase.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -18,42 +17,75 @@ export default async function handler(req, res) {
     console.log('🔐 Verifying email:', email);
     console.log('Code provided:', code);
 
-    // Get stored verification data
-    const storedData = verificationStore[email];
-    
-    if (!storedData) {
+    // Get the latest unverified code for this email
+    const { data, error } = await supabase
+      .from('verification_codes')
+      .select('*')
+      .eq('email', email)
+      .eq('verified', false)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error('Database error:', error);
+      return res.status(500).json({ error: 'Database error occurred' });
+    }
+
+    if (!data || data.length === 0) {
       return res.status(400).json({ 
         error: 'No verification code found. Please request a new code.' 
       });
     }
 
+    const verificationRecord = data[0];
+
     // Check if code has expired
-    if (Date.now() > storedData.expiresAt) {
-      // Remove expired code
-      delete verificationStore[email];
+    const now = new Date();
+    const expiresAt = new Date(verificationRecord.expires_at);
+    
+    if (now > expiresAt) {
+      // Mark as expired
+      await supabase
+        .from('verification_codes')
+        .update({ verified: true })
+        .eq('id', verificationRecord.id);
+        
       return res.status(400).json({ 
         error: 'Verification code has expired. Please request a new one.' 
       });
     }
 
     // Check if too many attempts
-    if (storedData.attempts >= 5) {
-      delete verificationStore[email];
+    if (verificationRecord.attempts >= 5) {
+      await supabase
+        .from('verification_codes')
+        .update({ verified: true })
+        .eq('id', verificationRecord.id);
+        
       return res.status(400).json({ 
         error: 'Too many failed attempts. Please request a new code.' 
       });
     }
 
     // Verify the code
-    if (storedData.code !== code) {
-      storedData.attempts += 1;
+    if (verificationRecord.code !== code) {
+      // Increment attempts
+      await supabase
+        .from('verification_codes')
+        .update({ attempts: verificationRecord.attempts + 1 })
+        .eq('id', verificationRecord.id);
+      
+      const remainingAttempts = 5 - (verificationRecord.attempts + 1);
       return res.status(400).json({ 
-        error: `Invalid verification code. ${5 - storedData.attempts} attempts remaining.` 
+        error: `Invalid verification code. ${remainingAttempts} attempts remaining.` 
       });
     }
 
-    // Success - remove the code from store
-    delete verificationStore[email];
+    // Success - mark as verified
+    await supabase
+      .from('verification_codes')
+      .update({ verified: true })
+      .eq('id', verificationRecord.id);
     
     console.log('✅ Email verified successfully:', email);
 

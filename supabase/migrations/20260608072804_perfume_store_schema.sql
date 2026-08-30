@@ -358,20 +358,6 @@ CREATE POLICY "admin_delete_banners" ON public.banners FOR DELETE
     EXISTS (SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.role = 'admin')
   );
 
--- ============================================
--- FRAGRANCE NOTES (Lookup table)
--- ============================================
-CREATE TABLE IF NOT EXISTS public.fragrance_notes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL UNIQUE,
-  slug TEXT NOT NULL UNIQUE,
-  type TEXT CHECK (type IN ('top', 'heart', 'base')),
-  description TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.fragrance_notes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "select_fragrance_notes" ON public.fragrance_notes FOR SELECT TO anon, authenticated USING (true);
 
 -- ============================================
 -- FUNCTION: Auto-create user profile on signup

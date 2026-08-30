@@ -338,7 +338,7 @@ export default function AdminProducts() {
   const [fieldErrors, setFieldErrors] = useState({ ...EMPTY_ERRORS });
   const [showSizeErrors, setShowSizeErrors] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [successTimeout, setSuccessTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [successTimeout, setSuccessTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const load = async () => {
     try {
