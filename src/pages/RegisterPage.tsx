@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle, XCircle, AlertCircle, Shield, Phone } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, XCircle, AlertCircle, Shield, Phone, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,6 +10,7 @@ interface FieldErrors {
   phone?: string;
   password?: string;
   confirm?: string;
+  verificationCode?: string;
 }
 
 export default function RegisterPage() {
@@ -35,6 +36,30 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const success = location.state?.success;
+
+  // Verification popup states
+  const [showVerificationPopup, setShowVerificationPopup] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [tempUserData, setTempUserData] = useState<{
+    email: string;
+    fullName: string;
+    password: string;
+    phone: string;
+  } | null>(null);
+
+  // Resend timer countdown
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const interval = setInterval(() => {
+        setResendTimer(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [resendTimer]);
 
   // Professional email validation
   const validateEmail = (email: string): boolean => {
@@ -132,6 +157,54 @@ export default function RegisterPage() {
     }
   };
 
+  // Send verification code to email
+  const sendVerificationCode = async (email: string, fullName: string) => {
+    try {
+      const response = await fetch('/api/send-verification-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, fullName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send verification email');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      throw error;
+    }
+  };
+
+  // Verify the code (check against stored code)
+  const verifyCode = async (email: string, code: string) => {
+    try {
+      const response = await fetch('/api/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid verification code');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Verification error:', error);
+      throw error;
+    }
+  };
+
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -175,17 +248,97 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const { error, role } = await signUp(email, password, fullName, phone);
+    try {
+      // Store user data temporarily
+      setTempUserData({
+        email,
+        fullName,
+        password,
+        phone
+      });
 
-    if (error) {
-      setError(error);
+      // Send verification code
+      await sendVerificationCode(email, fullName);
+      
+      // Show verification popup
+      setShowVerificationPopup(true);
+      setResendTimer(60); // 60 seconds cooldown
       setLoading(false);
+      
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  // Handle verification code submission
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 4) {
+      setFieldErrors(prev => ({ ...prev, verificationCode: 'Please enter a 4-digit code' }));
       return;
     }
 
-    setLoading(false);
-    console.log('role', role);
-    navigate(role === 'admin' ? '/admin' : '/account');
+    setVerificationLoading(true);
+    setVerificationError('');
+
+    try {
+      // Verify the code
+      await verifyCode(tempUserData!.email, verificationCode);
+      
+      setVerificationSuccess(true);
+      
+      // Now create the user account
+      const { error, role } = await signUp(
+        tempUserData!.email, 
+        tempUserData!.password, 
+        tempUserData!.fullName, 
+        tempUserData!.phone
+      );
+
+      if (error) {
+        setVerificationError(error);
+        setVerificationLoading(false);
+        return;
+      }
+
+      setVerificationLoading(false);
+      
+      // Close popup and navigate after successful verification
+      setTimeout(() => {
+        setShowVerificationPopup(false);
+        navigate(role === 'admin' ? '/admin' : '/account');
+      }, 1000);
+      
+    } catch (err) {
+      console.error('Verification error:', err);
+      setVerificationError(err instanceof Error ? err.message : 'Invalid verification code. Please try again.');
+      setVerificationLoading(false);
+    }
+  };
+
+  // Handle resend verification code
+  const handleResendCode = async () => {
+    if (resendTimer > 0) return;
+    
+    setResendTimer(60);
+    try {
+      await sendVerificationCode(tempUserData!.email, tempUserData!.fullName);
+      setVerificationError('');
+    } catch (error) {
+      console.error('Failed to resend code:', error);
+      setVerificationError('Failed to resend code. Please try again.');
+    }
+  };
+
+  // Close verification popup
+  const handleClosePopup = () => {
+    if (!verificationSuccess) {
+      setShowVerificationPopup(false);
+      setTempUserData(null);
+      setVerificationCode('');
+      setVerificationError('');
+    }
   };
 
   const handleFieldChange = (
@@ -243,6 +396,164 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex bg-neutral-950">
+      {/* Verification Popup */}
+      <AnimatePresence>
+        {showVerificationPopup && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
+            <div 
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={handleClosePopup}
+            />
+            
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gold-400" />
+              
+              <button
+                onClick={handleClosePopup}
+                disabled={verificationSuccess}
+                className="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="text-center mt-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-400/10 rounded-full mb-4 border border-gold-400/20">
+                  <Shield size={32} className="text-gold-400" />
+                </div>
+                
+                <h3 className="text-2xl font-serif font-light text-white mb-2">
+                  Verify Your Email
+                </h3>
+                
+                <p className="text-sm text-neutral-400 mb-6">
+                  We sent a 4-digit verification code to
+                </p>
+                <p className="text-sm text-gold-400 font-medium mb-6">
+                  {tempUserData?.email}
+                </p>
+
+                <AnimatePresence>
+                  {verificationError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-2 text-left"
+                    >
+                      <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-400">{verificationError}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {verificationSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm text-emerald-400 flex items-center gap-2"
+                  >
+                    <CheckCircle size={16} className="shrink-0" />
+                    <span>Email verified successfully!</span>
+                  </motion.div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setVerificationCode(value);
+                        if (fieldErrors.verificationCode) {
+                          setFieldErrors(prev => ({ ...prev, verificationCode: undefined }));
+                        }
+                        if (verificationError) {
+                          setVerificationError('');
+                        }
+                      }}
+                      placeholder="Enter 4-digit code"
+                      maxLength={4}
+                      disabled={verificationSuccess}
+                      className={`w-full px-4 py-3.5 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 transition-all duration-300 ${
+                        verificationError || fieldErrors.verificationCode
+                          ? 'border-red-500/50 focus:ring-red-500/30 bg-red-500/5'
+                          : verificationSuccess
+                          ? 'border-emerald-500/50 focus:ring-emerald-500/30 bg-emerald-500/5'
+                          : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
+                      }`}
+                    />
+                    <AnimatePresence>
+                      {(verificationError || fieldErrors.verificationCode) && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="mt-1.5 text-xs text-red-400 flex items-center gap-1.5"
+                        >
+                          <AlertCircle size={12} />
+                          {verificationError || fieldErrors.verificationCode}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <motion.button
+                    onClick={handleVerifyCode}
+                    disabled={verificationLoading || verificationSuccess}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-3.5 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-gold-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {verificationLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5 text-neutral-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Verifying...
+                      </span>
+                    ) : verificationSuccess ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <CheckCircle size={18} />
+                        Verified!
+                      </span>
+                    ) : (
+                      'Verify Email'
+                    )}
+                  </motion.button>
+
+                  <div className="text-center">
+                    <button
+                      onClick={handleResendCode}
+                      disabled={resendTimer > 0 || verificationSuccess}
+                      className={`text-sm transition-colors ${
+                        resendTimer > 0 || verificationSuccess
+                          ? 'text-neutral-500 cursor-not-allowed'
+                          : 'text-gold-400 hover:text-gold-300'
+                      }`}
+                    >
+                      {resendTimer > 0
+                        ? `Resend code in ${resendTimer}s`
+                        : verificationSuccess
+                        ? 'Email verified'
+                        : 'Resend verification code'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Registration Form */}
       <div className="hidden lg:block lg:w-1/2 xl:w-3/5 relative overflow-hidden">
         <img
           src={storyImageUrl}
