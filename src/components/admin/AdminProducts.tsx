@@ -348,13 +348,49 @@ export default function AdminProducts() {
   const [successTimeout, setSuccessTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const load = async () => {
-    const [{ data: prods }, { data: cats }] = await Promise.all([
-      supabase.from('products').select('*, categories(*)').order('created_at', { ascending: true }),
-      supabase.from('categories').select('*'),
-    ]);
-    setProducts((prods as Product[]) ?? []);
-    setCategories((cats as Category[]) ?? []);
-    setLoading(false);
+    try {
+      // FIXED: Use the many-to-many relationship through product_categories
+      const { data: prods, error: productsError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories!product_categories (
+            id,
+            name,
+            slug,
+            description,
+            image_url,
+            created_at,
+            updated_at
+          )
+        `)
+        .order('created_at', { ascending: true });
+
+      if (productsError) {
+        console.error('Error fetching products:', productsError);
+        setProducts([]);
+      } else {
+        console.log('Products fetched:', prods);
+        setProducts((prods as Product[]) ?? []);
+      }
+
+      const { data: cats, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*');
+
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        setCategories([]);
+      } else {
+        setCategories((cats as Category[]) ?? []);
+      }
+    } catch (err) {
+      console.error('Unexpected error loading data:', err);
+      setProducts([]);
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -655,6 +691,11 @@ export default function AdminProducts() {
                   const isLowStock = product.stock_quantity < 5;
                   const hasSale = product.sale_price && product.sale_price < product.price;
                   const currentPrice = hasSale ? product.sale_price : product.price;
+                  
+                  // Get category name from the categories array
+                  const categoriesData = (product as any).categories;
+                  const categoryArray = Array.isArray(categoriesData) ? categoriesData : categoriesData ? [categoriesData] : [];
+                  const categoryName = categoryArray.length > 0 ? categoryArray[0].name : '—';
 
                   return (
                     <motion.tr
@@ -689,7 +730,7 @@ export default function AdminProducts() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-neutral-900 hidden md:table-cell">
-                        {(product as any).categories?.name || '—'}
+                        {categoryName}
                       </td>
                       <td className="px-6 py-4 text-neutral-500 hidden lg:table-cell">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-gold-50 text-gold-700 text-xs font-medium border border-gold-200">
