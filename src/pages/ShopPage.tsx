@@ -22,7 +22,7 @@ export default function ShopPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
+  const [gridCols, setGridCols] = useState<2 | 3 | 4>(2); // Default to 2 on mobile
   const [error, setError] = useState<string | null>(null);
 
   const categoryParam = searchParams.get('category') ?? '';
@@ -240,10 +240,32 @@ export default function ShopPage() {
     );
   }
 
+  // Get grid classes based on columns
+  const getGridClasses = () => {
+    if (gridCols === 2) {
+      return 'grid-cols-2';
+    } else if (gridCols === 3) {
+      return 'grid-cols-2 sm:grid-cols-3';
+    } else {
+      return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4';
+    }
+  };
+
+  // Get loading skeleton grid classes
+  const getSkeletonGridClasses = () => {
+    if (gridCols === 2) {
+      return 'grid-cols-2';
+    } else if (gridCols === 3) {
+      return 'grid-cols-2 sm:grid-cols-3';
+    } else {
+      return 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-950">
       {/* Page header with gold accent */}
-      <div className="relative border-b border-neutral-800/50 bg-gradient-to-b from-neutral-900 to-neutral-950 py-16 px-4 text-center overflow-hidden">
+      <div className="relative border-b border-neutral-800/50 bg-gradient-to-b from-neutral-900 to-neutral-950 py-12 sm:py-16 px-4 text-center overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -253,7 +275,7 @@ export default function ShopPage() {
           <p className="text-xs font-medium tracking-[0.3em] uppercase text-gold-400 mb-3">
             {searchParam ? 'Search Results' : 'Collection'}
           </p>
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light text-white">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-white">
             {pageTitle}
           </h1>
           <div className="w-16 h-0.5 bg-gold-400/50 mx-auto mt-4" />
@@ -261,12 +283,12 @@ export default function ShopPage() {
         </motion.div>
       </div>
 
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-4 mb-8 pb-4 border-b border-neutral-800/50">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {/* Toolbar - Make it more compact on mobile */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-neutral-800/50">
           <button
             onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-2.5 text-sm font-medium text-neutral-400 hover:text-gold-400 transition-all duration-300 group"
+            className="flex items-center gap-2 text-sm font-medium text-neutral-400 hover:text-gold-400 transition-all duration-300 group"
           >
             <SlidersHorizontal size={16} className="group-hover:text-gold-400 transition-colors" />
             <span>Filters</span>
@@ -277,9 +299,9 @@ export default function ShopPage() {
             )}
           </button>
 
-          <div className="flex items-center gap-4">
-            {/* Grid toggle */}
-            <div className="hidden md:flex items-center gap-1 bg-neutral-800/50 rounded-lg p-1 border border-neutral-700/50">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Grid toggle - Hide on mobile, show on tablet+ */}
+            <div className="hidden sm:flex items-center gap-1 bg-neutral-800/50 rounded-lg p-1 border border-neutral-700/50">
               {([2, 3, 4] as const).map(n => (
                 <button
                   key={n}
@@ -295,33 +317,33 @@ export default function ShopPage() {
               ))}
             </div>
 
-            {/* Sort */}
-            <div className="relative">
+            {/* Sort - Make responsive */}
+            <div className="relative w-full sm:w-auto">
               <select
                 value={sortParam}
                 onChange={e => updateFilter('sort', e.target.value)}
-                className="appearance-none pl-4 pr-10 py-2.5 text-sm bg-neutral-800/50 border border-neutral-700/50 text-neutral-300 rounded-lg focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400/30 cursor-pointer transition-all duration-300 hover:border-neutral-600"
+                className="appearance-none pl-3 sm:pl-4 pr-8 sm:pr-10 py-2 text-xs sm:text-sm bg-neutral-800/50 border border-neutral-700/50 text-neutral-300 rounded-lg focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400/30 cursor-pointer transition-all duration-300 hover:border-neutral-600 w-full sm:w-auto"
               >
                 {SORT_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value} className="bg-neutral-900 text-neutral-300">
+                  <option key={o.value} value={o.value} className="bg-neutral-900 text-neutral-300 text-xs sm:text-sm">
                     {o.label}
                   </option>
                 ))}
               </select>
-              <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500" />
+              <ChevronDown size={14} className="absolute right-2.5 sm:right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500" />
             </div>
           </div>
         </div>
 
-        {/* Active filters with gold styling */}
+        {/* Active filters - Make wrap better on mobile */}
         {hasFilters && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 flex-wrap mb-6"
+            className="flex items-center gap-1.5 flex-wrap mb-4 sm:mb-6"
           >
             {categoryParam && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full">
+              <span className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] sm:text-xs rounded-full">
                 {categories.find(c => c.slug === categoryParam)?.name || categoryParam}
                 <button onClick={() => updateFilter('category', '')} className="hover:text-gold-300 transition-colors">
                   <X size={12} />
@@ -329,7 +351,7 @@ export default function ShopPage() {
               </span>
             )}
             {filterParam && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full capitalize">
+              <span className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] sm:text-xs rounded-full capitalize">
                 <Tag size={12} />
                 {filterParam}
                 <button onClick={() => updateFilter('filter', '')} className="hover:text-gold-300 transition-colors">
@@ -338,7 +360,7 @@ export default function ShopPage() {
               </span>
             )}
             {searchParam && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full">
+              <span className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] sm:text-xs rounded-full">
                 <Search size={12} />
                 "{searchParam}"
                 <button onClick={() => updateFilter('search', '')} className="hover:text-gold-300 transition-colors">
@@ -347,7 +369,7 @@ export default function ShopPage() {
               </span>
             )}
             {priceMin && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full">
+              <span className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] sm:text-xs rounded-full">
                 Min: ${priceMin}
                 <button onClick={() => setPriceMin('')} className="hover:text-gold-300 transition-colors">
                   <X size={12} />
@@ -355,7 +377,7 @@ export default function ShopPage() {
               </span>
             )}
             {priceMax && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full">
+              <span className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] sm:text-xs rounded-full">
                 Max: ${priceMax}
                 <button onClick={() => setPriceMax('')} className="hover:text-gold-300 transition-colors">
                   <X size={12} />
@@ -364,7 +386,7 @@ export default function ShopPage() {
             )}
             <button 
               onClick={clearFilters} 
-              className="text-xs text-neutral-500 hover:text-gold-400 transition-colors ml-2 underline-offset-2 hover:underline"
+              className="text-[10px] sm:text-xs text-neutral-500 hover:text-gold-400 transition-colors ml-1 underline-offset-2 hover:underline"
             >
               Clear all
             </button>
@@ -372,7 +394,7 @@ export default function ShopPage() {
         )}
 
         <div className="flex gap-8">
-          {/* Sidebar filters (desktop) - Gold themed */}
+          {/* Sidebar filters (desktop) */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-28 space-y-8">
               {/* Category */}
@@ -439,9 +461,7 @@ export default function ShopPage() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => {
-                    setPage(1);
-                  }} 
+                  onClick={() => setPage(1)} 
                   className="mt-3 w-full py-2 bg-gold-400 text-neutral-900 text-xs font-medium tracking-wider uppercase rounded-lg hover:shadow-lg hover:shadow-gold-400/20 transition-all duration-300 hover:scale-[1.02]"
                 >
                   Apply Price
@@ -484,14 +504,14 @@ export default function ShopPage() {
             </div>
           </aside>
 
-          {/* Products grid */}
-          <div className="flex-1">
+          {/* Products grid - Fixed responsive behavior */}
+          <div className="flex-1 min-w-0">
             {loading ? (
-              <div className={`grid gap-6 ${gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+              <div className={`grid gap-4 sm:gap-6 ${getSkeletonGridClasses()}`}>
                 {Array(PAGE_SIZE).fill(null).map((_, i) => (
                   <div key={i} className="animate-pulse">
                     <div className="aspect-[3/4] bg-neutral-800/50 rounded-2xl" />
-                    <div className="mt-4 h-3 bg-neutral-800/50 rounded w-2/3" />
+                    <div className="mt-3 h-3 bg-neutral-800/50 rounded w-2/3" />
                     <div className="mt-2 h-4 bg-neutral-800/50 rounded w-1/2" />
                   </div>
                 ))}
@@ -515,42 +535,69 @@ export default function ShopPage() {
                 </button>
               </motion.div>
             ) : (
-              <div className={`grid gap-6 ${gridCols === 2 ? 'grid-cols-2' : gridCols === 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+              <div className={`grid gap-4 sm:gap-6 ${getGridClasses()}`}>
                 {products.map((p, i) => (
                   <ProductCard key={p.id} product={p} index={i} />
                 ))}
               </div>
             )}
 
-            {/* Pagination with gold styling */}
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-14 pt-8 border-t border-neutral-800/50">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 mt-10 sm:mt-14 pt-6 sm:pt-8 border-t border-neutral-800/50">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 text-sm text-neutral-400 hover:text-gold-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-neutral-400 hover:text-gold-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`w-9 h-9 text-sm rounded-lg transition-all duration-300 ${
-                        p === page 
-                          ? 'bg-gold-400 text-neutral-900 shadow-lg shadow-gold-400/20 font-medium' 
-                          : 'text-neutral-400 hover:text-gold-400 hover:bg-neutral-800/50'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`w-7 h-7 sm:w-9 sm:h-9 text-xs sm:text-sm rounded-lg transition-all duration-300 ${
+                          pageNum === page 
+                            ? 'bg-gold-400 text-neutral-900 shadow-lg shadow-gold-400/20 font-medium' 
+                            : 'text-neutral-400 hover:text-gold-400 hover:bg-neutral-800/50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  {totalPages > 5 && page < totalPages - 2 && (
+                    <>
+                      <span className="text-neutral-500">...</span>
+                      <button
+                        onClick={() => setPage(totalPages)}
+                        className={`w-7 h-7 sm:w-9 sm:h-9 text-xs sm:text-sm rounded-lg transition-all duration-300 ${
+                          totalPages === page 
+                            ? 'bg-gold-400 text-neutral-900 shadow-lg shadow-gold-400/20 font-medium' 
+                            : 'text-neutral-400 hover:text-gold-400 hover:bg-neutral-800/50'
+                        }`}
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
                 </div>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-4 py-2 text-sm text-neutral-400 hover:text-gold-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-neutral-400 hover:text-gold-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -560,7 +607,7 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* Mobile filter drawer with gold theme */}
+      {/* Mobile filter drawer */}
       <AnimatePresence>
         {filterOpen && (
           <>
@@ -576,9 +623,9 @@ export default function ShopPage() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.3 }}
-              className="fixed top-0 left-0 bottom-0 z-[90] w-80 bg-neutral-900 shadow-2xl shadow-neutral-950 overflow-y-auto border-r border-neutral-800/50"
+              className="fixed top-0 left-0 bottom-0 z-[90] w-80 max-w-[85vw] bg-neutral-900 shadow-2xl shadow-neutral-950 overflow-y-auto border-r border-neutral-800/50"
             >
-              <div className="flex items-center justify-between p-6 border-b border-neutral-800/50">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-800/50">
                 <div className="flex items-center gap-3">
                   <Filter size={18} className="text-gold-400" />
                   <span className="font-medium tracking-widest uppercase text-sm text-white">Filters</span>
@@ -590,7 +637,7 @@ export default function ShopPage() {
                   <X size={20} />
                 </button>
               </div>
-              <div className="p-6 space-y-8">
+              <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
                 {/* Category */}
                 <div>
                   <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-gold-400 mb-4 border-b border-neutral-800/50 pb-2">
