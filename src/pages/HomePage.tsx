@@ -58,44 +58,40 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic - Show on every reload for customers who haven't used the discount
+  // Show popup logic
   useEffect(() => {
     // Don't show popup if still checking user status
     if (isCheckingUser) return;
 
-    // Check if user is admin - don't show popup for admins
-    if (authUser && userRole === 'admin') {
+    // If user is logged in
+    if (authUser) {
+      // Admin - never show popup
+      if (userRole === 'admin') {
+        setShowPopup(false);
+        return;
+      }
+      
+      // Customer - only show if they haven't used the discount
+      if (userRole === 'customer') {
+        setShowPopup(!hasUsedDiscount);
+        return;
+      }
+      
+      // If role is unknown or null, don't show
       setShowPopup(false);
       return;
     }
 
-    // Check if user is customer
-    if (authUser && userRole === 'customer') {
-      // Show popup ONLY if they haven't used the discount yet
-      if (!hasUsedDiscount) {
+    // For non-authenticated users - show popup based on localStorage
+    const hasDismissed = localStorage.getItem('welcomePopupDismissed');
+    if (!hasDismissed) {
+      const timer = setTimeout(() => {
         setShowPopup(true);
-      } else {
-        setShowPopup(false);
-      }
-      return;
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowPopup(false);
     }
-
-    // For non-authenticated users, show popup based on localStorage
-    if (!authUser) {
-      const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-      if (!hasDismissed) {
-        const timer = setTimeout(() => {
-          setShowPopup(true);
-        }, 2000);
-        return () => clearTimeout(timer);
-      } else {
-        setShowPopup(false);
-      }
-      return;
-    }
-
-    // Hide popup for all other cases
-    setShowPopup(false);
   }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
 
   const handleClosePopup = () => {
@@ -104,10 +100,9 @@ export default function HomePage() {
     if (!authUser) {
       localStorage.setItem('welcomePopupDismissed', 'true');
     }
-    // For authenticated users, we don't store dismissal because we check the DB
   };
 
-  // Handle signup and mark discount as used
+  // Handle signup - mark discount as used when user creates account
   const handleSignUp = async () => {
     if (authUser) {
       // Mark the discount as used when user signs up
@@ -300,11 +295,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal - Shows for customers who haven't used the discount */}
-      {!isCheckingUser && 
-       showPopup && 
-       !(authUser && userRole === 'admin') &&
-       (authUser ? (userRole === 'customer' && !hasUsedDiscount) : true) && (
+      {/* Popup Modal */}
+      {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div 
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"

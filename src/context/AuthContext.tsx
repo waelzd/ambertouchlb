@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email,
         phone: phone,
         role: 'customer',
-        has_used_signup_discount: false,
+        has_used_signup_discount: true,
       })
       .select('role')
       .single();
