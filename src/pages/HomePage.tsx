@@ -58,30 +58,28 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic - Works for all users
+  // Show popup logic - Show for ALL visitors
   useEffect(() => {
-    // Check if user is admin
+    // If user is admin, never show popup
     if (authUser && userRole === 'admin') {
       setShowPopup(false);
       return;
     }
 
-    // Check if user is a customer who has already used the discount
+    // If user is a customer who has already used the discount, never show popup
     if (authUser && userRole === 'customer' && hasUsedDiscount) {
       setShowPopup(false);
       return;
     }
 
-    // For all other cases (visitors + customers who haven't used discount)
-    // Check localStorage first
+    // Check if user dismissed the popup
     const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-    
     if (hasDismissed === 'true') {
       setShowPopup(false);
       return;
     }
 
-    // Show popup after 2 seconds
+    // Show popup after 2 seconds for ALL visitors (logged in or not)
     const timer = setTimeout(() => {
       setShowPopup(true);
     }, 2000);
@@ -91,7 +89,7 @@ export default function HomePage() {
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    // Store dismissal in localStorage for all users
+    // Store dismissal in localStorage
     localStorage.setItem('welcomePopupDismissed', 'true');
   };
 
@@ -288,7 +286,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal */}
+      {/* Popup Modal - Shows for ALL visitors unless dismissed or discount already used */}
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div 
