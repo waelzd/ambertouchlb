@@ -58,12 +58,12 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic
+  // Show popup logic - SIMPLIFIED
   useEffect(() => {
-    // Don't show popup if still checking user status
+    // Don't show popup if still checking user
     if (isCheckingUser) return;
 
-    // If user is logged in
+    // CASE 1: User is logged in
     if (authUser) {
       // Admin - never show popup
       if (userRole === 'admin') {
@@ -77,26 +77,30 @@ export default function HomePage() {
         return;
       }
       
-      // If role is unknown or null, don't show
+      // If role is unknown, don't show
       setShowPopup(false);
       return;
     }
 
-    // For non-authenticated users - show popup based on localStorage
+    // CASE 2: User is NOT logged in (visitor)
+    // Check localStorage for dismissal
     const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-    if (!hasDismissed) {
+    
+    if (hasDismissed === 'true') {
+      setShowPopup(false);
+    } else {
+      // Show popup after 2 seconds
       const timer = setTimeout(() => {
         setShowPopup(true);
       }, 2000);
+      
       return () => clearTimeout(timer);
-    } else {
-      setShowPopup(false);
     }
   }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    // For non-authenticated users, store dismissal in localStorage
+    // Store dismissal in localStorage for non-authenticated users
     if (!authUser) {
       localStorage.setItem('welcomePopupDismissed', 'true');
     }
