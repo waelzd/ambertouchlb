@@ -113,7 +113,7 @@ export default function HomePage() {
       
       if (hasDismissed === 'true') {
         console.log('Customer dismissed popup before, hiding');
-        setShowPopup(false);
+        setShowPopup(true);
         return;
       }
 
