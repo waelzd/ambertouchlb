@@ -5,9 +5,15 @@ import { ArrowRight, X, Gift, Sparkles, Droplet, Award, Heart, Shield, Leaf } fr
 import whatsappLogo from "../assets/WhatsApp_icon.png";
 import { supabase } from '../lib/supabase';
 import type { Product, Category, Banner } from '../types';
-import ProductCard from '../components/products/ProductCard';
+import ProductCardComponent from '../components/products/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import ScrollToTop from '../components/ScrollToTop';
+import ProductCard from './ProductPage';
+
+const ProductCardItem = ({ product, index }: { product: Product; index: number }) => {
+  const Card = ProductCardComponent as any;
+  return <Card product={product} index={index} />;
+};
 
 export default function HomePage() {
   const { authUser } = useAuth();
