@@ -239,7 +239,7 @@ export default function RegisterPage() {
   const SUPABASE_URL = 'https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public';
   const BUCKET_NAME = 'images';
   const FOLDER_NAME = 'ambertouch';
-  const storyImageUrl = `${SUPABASE_URL}/${BUCKET_NAME}/${FOLDER_NAME}/RegisterImg.png`;
+  const storyImageUrl = `${SUPABASE_URL}/${BUCKET_NAME}/${FOLDER_NAME}/RegisterImage.png`;
 
   return (
     <div className="min-h-screen flex bg-neutral-950">
@@ -250,10 +250,6 @@ export default function RegisterPage() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute top-1/2 -translate-y-1/2 left-12 text-white">
-          <h2 className="font-serif text-4xl font-light text-gold-400">Join Amber Touch</h2>
-          <p className="mt-2 text-white/60">Discover exclusive access and personalized service</p>
-        </div>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-neutral-950">

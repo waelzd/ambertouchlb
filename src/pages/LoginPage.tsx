@@ -108,7 +108,7 @@ export default function LoginPage() {
   const SUPABASE_URL = 'https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public';
   const BUCKET_NAME = 'images';
   const FOLDER_NAME = 'ambertouch';
-  const storyImageUrl = `${SUPABASE_URL}/${BUCKET_NAME}/${FOLDER_NAME}/LoginImg.png`;
+  const storyImageUrl = `${SUPABASE_URL}/${BUCKET_NAME}/${FOLDER_NAME}/LoginImage.png`;
 
   const isEmailValid = touched.email && email.trim() && validateEmail(email);
   const isEmailInvalid = touched.email && email.trim() && !validateEmail(email);
@@ -125,10 +125,6 @@ export default function LoginPage() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute top-1/2 -translate-y-1/2 left-12 text-white">
-          <h2 className="font-serif text-4xl font-light text-gold-400">Welcome Back</h2>
-          <p className="mt-2 text-white/60">Sign in to your account</p>
-        </div>
       </div>
 
       {/* FORM */}
