@@ -23,6 +23,7 @@ export default function ShopPage() {
   const [page, setPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
   const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
+  const [error, setError] = useState<string | null>(null);
 
   const categoryParam = searchParams.get('category') ?? '';
   const filterParam = searchParams.get('filter') ?? '';
@@ -32,49 +33,141 @@ export default function ShopPage() {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
 
+  // Load categories first
   useEffect(() => {
-    supabase.from('categories').select('*').then(({ data, error }) => {
-      if (error) console.error('Categories error:', error);
-      setCategories((data as Category[]) ?? []);
-    });
+    const loadCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*');
+        
+        if (error) {
+          console.error('Categories error:', error);
+          setError('Failed to load categories');
+          return;
+        }
+        
+        console.log('Categories loaded:', data);
+        setCategories((data as Category[]) ?? []);
+      } catch (err) {
+        console.error('Unexpected error loading categories:', err);
+        setError('Unexpected error loading categories');
+      }
+    };
+    
+    loadCategories();
   }, []);
 
   const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    
-    // FIXED: Specify the relationship explicitly using !products_category_id_fkey
-    let query = supabase
-      .from('products')
-      .select('*, categories!products_category_id_fkey(*)', { count: 'exact' })
-      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching products with params:', {
+        categoryParam,
+        filterParam,
+        searchParam,
+        sortParam,
+        page,
+        priceMin,
+        priceMax,
+        categoriesLoaded: categories.length
+      });
 
-    if (categoryParam) {
-      const cat = categories.find(c => c.slug === categoryParam);
-      if (cat) query = query.eq('category_id', cat.id);
+      // Start building the query
+      let query = supabase
+        .from('products')
+        .select('*, categories!products_category_id_fkey(*)', { count: 'exact' })
+        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
+      // Handle category filter
+      if (categoryParam) {
+        const cat = categories.find(c => c.slug === categoryParam);
+        if (cat) {
+          console.log('Filtering by category:', cat.id, cat.name);
+          query = query.eq('category_id', cat.id);
+        } else {
+          console.warn('Category not found for slug:', categoryParam);
+          // If category not found, return empty results
+          setProducts([]);
+          setTotal(0);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Handle sale filter
+      if (filterParam === 'sale') {
+        console.log('Filtering by sale items');
+        query = query.not('sale_price', 'is', null);
+      }
+
+      // Handle search
+      if (searchParam) {
+        console.log('Searching for:', searchParam);
+        query = query.ilike('name', `%${searchParam}%`);
+      }
+
+      // Handle price range
+      if (priceMin) {
+        const min = parseFloat(priceMin);
+        if (!isNaN(min)) {
+          console.log('Price min:', min);
+          query = query.gte('price', min);
+        }
+      }
+      if (priceMax) {
+        const max = parseFloat(priceMax);
+        if (!isNaN(max)) {
+          console.log('Price max:', max);
+          query = query.lte('price', max);
+        }
+      }
+
+      // Handle sorting
+      if (sortParam === 'price_asc') {
+        query = query.order('price', { ascending: true });
+      } else if (sortParam === 'price_desc') {
+        query = query.order('price', { ascending: false });
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      console.log('Executing query...');
+      const { data, count, error: fetchError } = await query;
+      
+      if (fetchError) {
+        console.error('Products fetch error:', fetchError);
+        setError(`Failed to fetch products: ${fetchError.message}`);
+        setProducts([]);
+        setTotal(0);
+      } else {
+        console.log(`Fetched ${data?.length || 0} products, total: ${count || 0}`);
+        setProducts((data as Product[]) ?? []);
+        setTotal(count ?? 0);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching products:', err);
+      setError('Unexpected error occurred while fetching products');
+      setProducts([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
     }
-    if (filterParam === 'sale') query = query.not('sale_price', 'is', null);
-    if (searchParam) query = query.ilike('name', `%${searchParam}%`);
-    if (priceMin) query = query.gte('price', parseFloat(priceMin));
-    if (priceMax) query = query.lte('price', parseFloat(priceMax));
-
-    if (sortParam === 'price_asc') query = query.order('price', { ascending: true });
-    else if (sortParam === 'price_desc') query = query.order('price', { ascending: false });
-    else query = query.order('created_at', { ascending: false });
-
-    const { data, count, error } = await query;
-    if (error) console.error('Products fetch error:', error);
-    setProducts((data as Product[]) ?? []);
-    setTotal(count ?? 0);
-    setLoading(false);
   }, [categoryParam, filterParam, searchParam, sortParam, page, priceMin, priceMax, categories]);
 
+  // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [categoryParam, filterParam, searchParam, sortParam]);
+  }, [categoryParam, filterParam, searchParam, sortParam, priceMin, priceMax]);
 
+  // Fetch products when dependencies change
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    // Only fetch if categories are loaded
+    if (categories.length > 0 || !categoryParam) {
+      fetchProducts();
+    }
+  }, [fetchProducts, categories, categoryParam]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -99,6 +192,23 @@ export default function ShopPage() {
     : categoryParam
     ? categories.find(c => c.slug === categoryParam)?.name ?? 'Shop'
     : 'All Products';
+
+  // Show error if any
+  if (error) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-red-400 text-lg mb-4">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-2 bg-gold-400 text-neutral-900 rounded-lg hover:bg-gold-300 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-950">
@@ -182,7 +292,7 @@ export default function ShopPage() {
           >
             {categoryParam && (
               <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full">
-                {categories.find(c => c.slug === categoryParam)?.name}
+                {categories.find(c => c.slug === categoryParam)?.name || categoryParam}
                 <button onClick={() => updateFilter('category', '')} className="hover:text-gold-300 transition-colors">
                   <X size={12} />
                 </button>
@@ -202,6 +312,22 @@ export default function ShopPage() {
                 <Search size={12} />
                 "{searchParam}"
                 <button onClick={() => updateFilter('search', '')} className="hover:text-gold-300 transition-colors">
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+            {priceMin && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full">
+                Min: ${priceMin}
+                <button onClick={() => setPriceMin('')} className="hover:text-gold-300 transition-colors">
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+            {priceMax && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-xs rounded-full">
+                Max: ${priceMax}
+                <button onClick={() => setPriceMax('')} className="hover:text-gold-300 transition-colors">
                   <X size={12} />
                 </button>
               </span>
@@ -283,7 +409,11 @@ export default function ShopPage() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => fetchProducts()} 
+                  onClick={() => {
+                    // Trigger fetch by updating state
+                    setPage(1);
+                    // The useEffect will handle the fetch
+                  }} 
                   className="mt-3 w-full py-2 bg-gold-400 text-neutral-900 text-xs font-medium tracking-wider uppercase rounded-lg hover:shadow-lg hover:shadow-gold-400/20 transition-all duration-300 hover:scale-[1.02]"
                 >
                   Apply Price
@@ -513,7 +643,10 @@ export default function ShopPage() {
                     </div>
                   </div>
                   <button 
-                    onClick={() => { fetchProducts(); setFilterOpen(false); }} 
+                    onClick={() => { 
+                      setPage(1);
+                      setFilterOpen(false); 
+                    }} 
                     className="mt-3 w-full py-2 bg-gold-400 text-neutral-900 text-xs font-medium tracking-wider uppercase rounded-lg hover:shadow-lg hover:shadow-gold-400/20 transition-all duration-300"
                   >
                     Apply Price
