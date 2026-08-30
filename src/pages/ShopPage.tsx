@@ -33,7 +33,7 @@ export default function ShopPage() {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
 
-  // Load categories first
+  // Load categories
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -71,24 +71,57 @@ export default function ShopPage() {
         page,
         priceMin,
         priceMax,
-        categoriesLoaded: categories.length
       });
 
       // Start building the query
       let query = supabase
         .from('products')
-        .select('*, categories!products_category_id_fkey(*)', { count: 'exact' })
+        .select(`
+          *,
+          categories!product_categories (
+            id,
+            name,
+            slug,
+            description,
+            image_url,
+            created_at,
+            updated_at
+          )
+        `, { count: 'exact' })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-      // Handle category filter
+      // Handle category filter - using the junction table
       if (categoryParam) {
         const cat = categories.find(c => c.slug === categoryParam);
         if (cat) {
           console.log('Filtering by category:', cat.id, cat.name);
-          query = query.eq('category_id', cat.id);
+          // First get product IDs from the junction table
+          const { data: productCategoryData, error: pcError } = await supabase
+            .from('product_categories')
+            .select('product_id')
+            .eq('category_id', cat.id);
+
+          if (pcError) {
+            console.error('Error fetching product_categories:', pcError);
+            setProducts([]);
+            setTotal(0);
+            setLoading(false);
+            return;
+          }
+
+          const productIds = productCategoryData?.map(pc => pc.product_id) || [];
+          console.log('Product IDs for category:', productIds);
+
+          if (productIds.length === 0) {
+            setProducts([]);
+            setTotal(0);
+            setLoading(false);
+            return;
+          }
+
+          query = query.in('id', productIds);
         } else {
           console.warn('Category not found for slug:', categoryParam);
-          // If category not found, return empty results
           setProducts([]);
           setTotal(0);
           setLoading(false);
@@ -163,11 +196,8 @@ export default function ShopPage() {
 
   // Fetch products when dependencies change
   useEffect(() => {
-    // Only fetch if categories are loaded
-    if (categories.length > 0 || !categoryParam) {
-      fetchProducts();
-    }
-  }, [fetchProducts, categories, categoryParam]);
+    fetchProducts();
+  }, [fetchProducts]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -410,9 +440,7 @@ export default function ShopPage() {
                 </div>
                 <button 
                   onClick={() => {
-                    // Trigger fetch by updating state
                     setPage(1);
-                    // The useEffect will handle the fetch
                   }} 
                   className="mt-3 w-full py-2 bg-gold-400 text-neutral-900 text-xs font-medium tracking-wider uppercase rounded-lg hover:shadow-lg hover:shadow-gold-400/20 transition-all duration-300 hover:scale-[1.02]"
                 >
