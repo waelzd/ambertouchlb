@@ -41,9 +41,11 @@ export default function ShopPage() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
+    
+    // FIXED: Specify the relationship explicitly using !products_category_id_fkey
     let query = supabase
       .from('products')
-      .select('*, categories(*)', { count: 'exact' })
+      .select('*, categories!products_category_id_fkey(*)', { count: 'exact' })
       .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
     if (categoryParam) {
