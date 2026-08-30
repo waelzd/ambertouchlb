@@ -69,10 +69,14 @@ export default function HomePage() {
       return;
     }
 
-    // Check if user is customer and hasn't used the discount
-    if (authUser && userRole === 'customer' && !hasUsedDiscount) {
-      // Show popup on every reload for eligible customers
-      setShowPopup(true);
+    // Check if user is customer
+    if (authUser && userRole === 'customer') {
+      // Show popup ONLY if they haven't used the discount yet
+      if (!hasUsedDiscount) {
+        setShowPopup(true);
+      } else {
+        setShowPopup(false);
+      }
       return;
     }
 
@@ -117,6 +121,7 @@ export default function HomePage() {
           console.error('Error updating discount status:', error);
         } else {
           setHasUsedDiscount(true);
+          setShowPopup(false);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -295,7 +300,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal - Shows for customers who haven't used the discount and on every reload */}
+      {/* Popup Modal - Shows for customers who haven't used the discount */}
       {!isCheckingUser && 
        showPopup && 
        !(authUser && userRole === 'admin') &&

@@ -29,15 +29,14 @@ function slugify(text: string): string {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
-// Safely parse a price string to a 2-decimal number, avoiding
-// floating point artifacts like 4 -> 3.999999999999.
+// Safely parse a price string to a 2-decimal number
 function toMoney(value: string): number {
   const n = parseFloat(value);
   if (isNaN(n)) return 0;
@@ -46,7 +45,7 @@ function toMoney(value: string): number {
 
 type ImageEntry = { type: 'url'; value: string } | { type: 'file'; file: File; preview: string };
 
-// Image Input Component - Simplified like Category page
+// Image Input Component
 function ImageInput({
   entries,
   onChange,
@@ -59,13 +58,10 @@ function ImageInput({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Replace the first entry with the file
       if (entries.length > 0 && entries[0].type === 'url' && !entries[0].value) {
-        // If first entry is empty URL, replace it
         const preview = URL.createObjectURL(file);
         onChange([{ type: 'file', file, preview }]);
       } else {
-        // Add as new entry
         const preview = URL.createObjectURL(file);
         onChange([...entries, { type: 'file', file, preview }]);
       }
@@ -79,7 +75,6 @@ function ImageInput({
       URL.revokeObjectURL(entry.preview);
     }
     onChange(entries.filter((_, i) => i !== index));
-    // If no entries left, add an empty URL entry
     if (entries.length === 1) {
       onChange([{ type: 'url', value: '' }]);
     }
@@ -87,7 +82,6 @@ function ImageInput({
 
   return (
     <div>
-      {/* Image Upload Area - Like Category page */}
       <div 
         className="border-2 border-dashed border-neutral-200 rounded-xl p-6 text-center hover:border-gold-400 transition-all duration-200 cursor-pointer"
         onClick={() => fileRef.current?.click()}
@@ -175,11 +169,9 @@ function SizesInput({
 }) {
   const addSize = () => onChange([...sizes, { label: '', price: 0 }]);
 
-  // Strip the "ML" suffix for display, so the input only shows the number
   const displayValue = (label: string) => label.replace(/ML$/i, '');
 
   const updateLabel = (i: number, rawValue: string) => {
-    // Only allow digits (and a decimal point, in case of e.g. 62.5ML)
     const digits = rawValue.replace(/[^0-9.]/g, '');
     const next = [...sizes];
     next[i] = { ...next[i], label: digits ? `${digits}ML` : '' };
@@ -315,14 +307,14 @@ async function getNextProductCode(): Promise<number> {
   
   if (error) {
     console.error('Error getting next code:', error);
-    return 1000; // Default starting code
+    return 1000;
   }
   
   if (data && data.length > 0 && data[0].code) {
     return data[0].code + 1;
   }
   
-  return 1000; // First product code
+  return 1000;
 }
 
 export default function AdminProducts() {
@@ -333,6 +325,7 @@ export default function AdminProducts() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState({ ...EMPTY_PRODUCT });
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [imageEntries, setImageEntries] = useState<ImageEntry[]>([{ type: 'url', value: '' }]);
   const [sizes, setSizes] = useState<ProductSize[]>([]);
   const [saving, setSaving] = useState(false);
@@ -349,7 +342,6 @@ export default function AdminProducts() {
 
   const load = async () => {
     try {
-      // FIXED: Use the many-to-many relationship through product_categories
       const { data: prods, error: productsError } = await supabase
         .from('products')
         .select(`
@@ -395,6 +387,26 @@ export default function AdminProducts() {
 
   useEffect(() => { load(); }, []);
 
+  // Load product's categories when editing
+  const loadProductCategories = async (productId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('product_categories')
+        .select('category_id')
+        .eq('product_id', productId);
+
+      if (error) {
+        console.error('Error loading product categories:', error);
+        return [];
+      }
+
+      return data?.map(item => item.category_id) || [];
+    } catch (err) {
+      console.error('Error:', err);
+      return [];
+    }
+  };
+
   const showSuccessMessage = (message: string) => {
     if (successTimeout) {
       clearTimeout(successTimeout);
@@ -407,10 +419,10 @@ export default function AdminProducts() {
     setSuccessTimeout(timeout);
   };
 
-  // Get next code when opening create modal
   const openCreate = async () => {
     setEditingProduct(null);
     setForm({ ...EMPTY_PRODUCT });
+    setSelectedCategoryIds([]);
     setImageEntries([{ type: 'url', value: '' }]);
     setSizes([]);
     setFieldErrors({ ...EMPTY_ERRORS });
@@ -421,7 +433,7 @@ export default function AdminProducts() {
     setModalOpen(true);
   };
 
-  const openEdit = (p: Product) => {
+  const openEdit = async (p: Product) => {
     setEditingProduct(p);
     setForm({
       name: p.name, 
@@ -432,6 +444,11 @@ export default function AdminProducts() {
       category_id: p.category_id ?? '',
       image_urls: p.image_urls.length > 0 ? p.image_urls : [''],
     });
+    
+    // Load existing categories for this product
+    const categoryIds = await loadProductCategories(p.id);
+    setSelectedCategoryIds(categoryIds);
+    
     setImageEntries(
       p.image_urls.length > 0
         ? [{ type: 'url', value: p.image_urls[0] }]
@@ -448,7 +465,6 @@ export default function AdminProducts() {
     setTouched(prev => ({ ...prev, [field]: true }));
   };
 
-  // Validation functions
   const validateField = (field: string, value: string) => {
     if (field === 'name') {
       if (!value.trim()) return 'Product name is required';
@@ -469,20 +485,36 @@ export default function AdminProducts() {
   const isFormValid = () => {
     const nameError = validateField('name', form.name);
     const slugError = validateField('slug', form.slug);
-    const categoryError = !form.category_id;
+    const categoryError = selectedCategoryIds.length === 0;
     return !nameError && !slugError && !categoryError;
+  };
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setSelectedCategoryIds(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+    // Clear error if categories are selected
+    if (fieldErrors.category_id && selectedCategoryIds.length > 0) {
+      setFieldErrors(f => ({ ...f, category_id: false }));
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Mark all fields as touched
     setTouched({ name: true, slug: true, category_id: true });
 
     const sizesInvalid = sizes.length === 0 || sizes.some(s => !s.label.trim() || !s.price || s.price <= 0);
 
     if (!isFormValid() || sizesInvalid) {
       setShowSizeErrors(sizesInvalid);
+      if (selectedCategoryIds.length === 0) {
+        setFieldErrors(f => ({ ...f, category_id: true }));
+      }
       return;
     }
 
@@ -508,12 +540,8 @@ export default function AdminProducts() {
       }
     }
 
-    // Only keep sizes with both a label and a valid price
     const cleanedSizes = sizes.filter(s => s.label.trim() && s.price > 0);
-    // Base price is derived from the lowest size price
     const basePrice = Math.min(...cleanedSizes.map(s => s.price));
-
-    // Use slug from form or auto-generate from name
     const finalSlug = form.slug || slugify(form.name);
 
     const payload = {
@@ -523,23 +551,61 @@ export default function AdminProducts() {
       price: basePrice,
       sale_price: form.sale_price ? toMoney(form.sale_price) : null,
       stock_quantity: 5,
-      category_id: form.category_id,
+      category_id: selectedCategoryIds.length > 0 ? selectedCategoryIds[0] : null,
       image_urls: resolvedUrls,
       sizes: cleanedSizes,
     };
 
     try {
+      let productId: string;
+
       if (editingProduct) {
+        // Update product
         await supabase.from('products').update(payload).eq('id', editingProduct.id);
+        productId = editingProduct.id;
+        
+        // Delete existing category associations
+        await supabase
+          .from('product_categories')
+          .delete()
+          .eq('product_id', editingProduct.id);
+        
         showSuccessMessage('Product updated successfully');
       } else {
+        // Insert new product
         const newPayload = {
           ...payload,
           code: nextCode,
         };
-        await supabase.from('products').insert(newPayload);
+        const { data, error } = await supabase
+          .from('products')
+          .insert(newPayload)
+          .select('id')
+          .single();
+        
+        if (error) throw error;
+        productId = data.id;
         showSuccessMessage(`Product created successfully with code #${nextCode}`);
       }
+
+      // Insert new category associations
+      if (selectedCategoryIds.length > 0) {
+        const categoryAssociations = selectedCategoryIds.map(categoryId => ({
+          product_id: productId,
+          category_id: categoryId,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('product_categories')
+          .insert(categoryAssociations);
+
+        if (insertError) {
+          console.error('Error inserting category associations:', insertError);
+          setErrorMessage('Product saved but categories may not be fully associated.');
+          setShowError(true);
+        }
+      }
+
       await load();
       setModalOpen(false);
     } catch (error: any) {
@@ -566,12 +632,14 @@ export default function AdminProducts() {
 
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
-    (p as any).categories?.name?.toLowerCase().includes(search.toLowerCase())
+    (p as any).categories?.some((cat: any) => 
+      cat.name.toLowerCase().includes(search.toLowerCase())
+    )
   );
 
   return (
     <div className="space-y-8">
-      {/* Success Message - Inline */}
+      {/* Success Message */}
       {showSuccess && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -584,7 +652,7 @@ export default function AdminProducts() {
         </motion.div>
       )}
 
-      {/* Error Message - Inline */}
+      {/* Error Message */}
       {showError && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -669,7 +737,7 @@ export default function AdminProducts() {
                     Code
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
-                    Category
+                    Categories
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     Size &amp; Price
@@ -687,10 +755,12 @@ export default function AdminProducts() {
                   const imageUrl = product.image_urls?.[0];
                   const isLowStock = product.stock_quantity < 5;
                   
-                  // Get category name from the categories array
+                  // Get category names from the categories array
                   const categoriesData = (product as any).categories;
                   const categoryArray = Array.isArray(categoriesData) ? categoriesData : categoriesData ? [categoriesData] : [];
-                  const categoryName = categoryArray.length > 0 ? categoryArray[0].name : '—';
+                  const categoryNames = categoryArray.length > 0 
+                    ? categoryArray.map((cat: any) => cat.name).join(', ')
+                    : '—';
 
                   // Format sizes with prices
                   const sizes = product.sizes ?? [];
@@ -743,7 +813,7 @@ export default function AdminProducts() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-neutral-900 hidden md:table-cell">
-                        {categoryName}
+                        {categoryNames}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap items-center gap-1 text-sm">
@@ -833,7 +903,6 @@ export default function AdminProducts() {
                         onChange={e => {
                           const newName = e.target.value;
                           setForm(f => ({ ...f, name: newName }));
-                          // Auto-generate slug from name on both create and update
                           const newSlug = slugify(newName);
                           setForm(f => ({ ...f, slug: newSlug }));
                           if (fieldErrors.name && newName.trim()) {
@@ -896,56 +965,62 @@ export default function AdminProducts() {
                     </p>
                   </div>
 
-                  <div>
+                  {/* Multi-Category Selection */}
+                  <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">
-                      Category <span className="text-red-500">*</span>
+                      Categories <span className="text-red-500">*</span> <span className="text-xs text-neutral-400 font-normal">(Select one or more categories)</span>
                     </label>
                     <div className="relative">
-                      <select 
-                        value={form.category_id} 
-                        onChange={e => {
-                          setForm(f => ({ ...f, category_id: e.target.value }));
-                          if (fieldErrors.category_id && e.target.value) {
-                            setFieldErrors(f => ({ ...f, category_id: false }));
-                          }
-                        }}
-                        onBlur={() => handleBlur('category_id')}
-                        className={`w-full px-4 py-3 bg-neutral-50 border rounded-xl outline-none transition-all duration-200 text-base appearance-none ${
-                          (fieldErrors.category_id || (touched.category_id && !form.category_id))
-                            ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30'
-                            : touched.category_id && form.category_id
-                            ? 'border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/30'
-                            : 'border-neutral-200 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20'
-                        }`}
-                      >
-                        <option value="">Select category</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-                      {touched.category_id && form.category_id && !fieldErrors.category_id && (
+                      <div className={`flex flex-wrap gap-2 p-3 bg-neutral-50 border rounded-xl min-h-[52px] ${
+                        (fieldErrors.category_id || (selectedCategoryIds.length === 0 && touched.category_id))
+                          ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30'
+                          : selectedCategoryIds.length > 0
+                          ? 'border-emerald-500 bg-emerald-50/30'
+                          : 'border-neutral-200 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20'
+                      }`}>
+                        {categories.map(cat => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => handleCategoryToggle(cat.id)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 ${
+                              selectedCategoryIds.includes(cat.id)
+                                ? 'bg-gold-400 text-neutral-900 shadow-sm shadow-gold-400/20'
+                                : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300'
+                            }`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                        {categories.length === 0 && (
+                          <span className="text-sm text-neutral-400">No categories available. Please create categories first.</span>
+                        )}
+                      </div>
+                      {selectedCategoryIds.length > 0 && (
                         <CheckCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" />
                       )}
-                      {(fieldErrors.category_id || (touched.category_id && !form.category_id)) && (
+                      {(fieldErrors.category_id || (selectedCategoryIds.length === 0 && touched.category_id)) && (
                         <AlertCircle size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none" />
                       )}
                     </div>
-                    {(fieldErrors.category_id || (touched.category_id && !form.category_id)) && (
+                    {(fieldErrors.category_id || (selectedCategoryIds.length === 0 && touched.category_id)) && (
                       <motion.p 
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-1.5 text-xs text-red-500 flex items-center gap-1"
                       >
                         <AlertCircle size={12} />
-                        Please select a category
+                        Please select at least one category
                       </motion.p>
                     )}
-                    {touched.category_id && form.category_id && !fieldErrors.category_id && (
+                    {selectedCategoryIds.length > 0 && !fieldErrors.category_id && (
                       <motion.p 
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-1.5 text-xs text-emerald-500 flex items-center gap-1"
                       >
                         <CheckCircle size={12} />
-                        Category selected
+                        {selectedCategoryIds.length} category{selectedCategoryIds.length > 1 ? 'ies' : ''} selected
                       </motion.p>
                     )}
                   </div>
