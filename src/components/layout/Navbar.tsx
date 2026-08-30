@@ -245,11 +245,12 @@ export default function Navbar() {
               onMouseLeave={() => setMegaMenu(null)}
             >
               <div className="max-w-screen-xl mx-auto px-8 py-8">
-                <div className="grid grid-cols-4 gap-8">
+                <div className="grid grid-cols-5 gap-8">
+                  {/* Categories List - Left Column */}
                   <div>
                     <p className="text-gold-400 text-xs font-medium tracking-[0.2em] uppercase mb-4">Categories</p>
                     <ul className="space-y-2.5">
-                      {categories.map(cat => (
+                      {categories.slice(0, 8).map(cat => (
                         <li key={cat.id}>
                           <Link to={`/shop?category=${cat.slug}`} className="text-sm text-neutral-300 hover:text-gold-400 transition-colors">
                             {cat.name}
@@ -259,17 +260,23 @@ export default function Navbar() {
                     </ul>
                   </div>
 
-                  <div className="col-span-3 grid grid-cols-3 gap-4">
-                    {categories.slice(0, 3).map(cat => (
-                      <Link key={cat.id} to={`/shop?category=${cat.slug}`} className="group block overflow-hidden rounded-lg">
+                  {/* Category Cards - 4 columns */}
+                  <div className="col-span-4 grid grid-cols-4 gap-4">
+                    {categories.slice(0, 4).map(cat => (
+                      <Link 
+                        key={cat.id} 
+                        to={`/shop?category=${cat.slug}`} 
+                        className="group block overflow-hidden rounded-lg"
+                      >
                         <div className="aspect-[4/3] overflow-hidden bg-neutral-800 rounded-lg">
                           <img
                             src={cat.image_url ?? ''}
                             alt={cat.name}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
                           />
                         </div>
-                        <p className="mt-2 text-sm font-medium text-neutral-300 group-hover:text-gold-400 transition-colors">
+                        <p className="mt-2 text-sm font-medium text-neutral-300 group-hover:text-gold-400 transition-colors text-center">
                           {cat.name}
                         </p>
                       </Link>
@@ -360,7 +367,7 @@ export default function Navbar() {
                     </Link>
                     {link.children && (
                       <div className="pl-4 space-y-1 py-1 border-l-2 border-neutral-800 ml-2">
-                        {categories.map(cat => (
+                        {categories.slice(0, 6).map(cat => (
                           <Link key={cat.id} to={`/shop?category=${cat.slug}`} className="block py-2 text-sm text-neutral-400 hover:text-gold-400 transition-colors" onClick={() => setMobileOpen(false)}>
                             {cat.name}
                           </Link>
