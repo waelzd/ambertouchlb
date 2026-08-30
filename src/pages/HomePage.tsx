@@ -58,82 +58,68 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic - COMPLETELY REWRITTEN
+  // Show popup logic - SIMPLIFIED
   useEffect(() => {
-    console.log('Popup check - authUser:', authUser, 'userRole:', userRole, 'hasUsedDiscount:', hasUsedDiscount, 'isCheckingUser:', isCheckingUser);
+    console.log('Checking popup - isCheckingUser:', isCheckingUser, 'authUser:', authUser);
     
-    // If still checking user, wait
+    // Don't show popup while checking
     if (isCheckingUser) {
       console.log('Still checking user, waiting...');
       return;
     }
 
-    // Check if user is admin
+    console.log('User check complete, deciding on popup...');
+
+    // If user is admin, never show
     if (authUser && userRole === 'admin') {
-      console.log('User is admin, hiding popup');
+      console.log('User is admin, no popup');
       setShowPopup(false);
       return;
     }
 
-    // Check if user is a customer who has already used the discount
+    // If user is customer and has used discount, never show
     if (authUser && userRole === 'customer' && hasUsedDiscount) {
-      console.log('Customer already used discount, hiding popup');
+      console.log('Customer already used discount, no popup');
       setShowPopup(false);
       return;
     }
 
-    // For visitors (authUser is null), ALWAYS show popup UNLESS they dismissed it
-    if (!authUser) {
-      const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-      console.log('Visitor - Popup dismissed in localStorage:', hasDismissed);
-      
-      if (hasDismissed === 'true') {
-        console.log('Visitor dismissed popup before, hiding');
-        setShowPopup(false);
-        return;
-      }
-
-      // Show popup after 2 seconds for visitors
-      console.log('Showing popup for visitor after 2 seconds');
-      const timer = setTimeout(() => {
-        console.log('Timer triggered - showing popup for visitor');
-        setShowPopup(true);
-      }, 2000);
-      
-      return () => {
-        console.log('Cleaning up visitor timer');
-        clearTimeout(timer);
-      };
+    // Check if popup was dismissed
+    const hasDismissed = localStorage.getItem('welcomePopupDismissed');
+    console.log('Popup dismissed in localStorage:', hasDismissed);
+    
+    if (hasDismissed === 'true') {
+      console.log('Popup was dismissed, hiding');
+      setShowPopup(false);
+      return;
     }
 
-    // For logged-in customers who haven't used the discount
-    if (authUser && userRole === 'customer' && !hasUsedDiscount) {
+    // SHOW POPUP! - This runs when isCheckingUser is false and no conditions block it
+    console.log('Showing popup now!');
+    setShowPopup(true);
+    
+  }, [isCheckingUser, authUser, userRole, hasUsedDiscount]);
+
+  // Separate effect for timer - runs once when component mounts
+  useEffect(() => {
+    console.log('Component mounted, setting up timer...');
+    // Show popup after 2 seconds, but only if not already showing
+    const timer = setTimeout(() => {
+      console.log('Timer triggered!');
+      // Check again if popup should show
       const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-      console.log('Customer - Popup dismissed in localStorage:', hasDismissed);
-      
-      if (hasDismissed === 'true') {
-        console.log('Customer dismissed popup before, hiding');
+      if (hasDismissed !== 'true' && !showPopup && !isCheckingUser) {
+        // Check if user is admin
+        if (authUser && userRole === 'admin') return;
+        // Check if user is customer and used discount
+        if (authUser && userRole === 'customer' && hasUsedDiscount) return;
+        console.log('Timer: Setting showPopup to true');
         setShowPopup(true);
-        return;
       }
-
-      // Show popup after 2 seconds for customers who haven't used discount
-      console.log('Showing popup for customer after 2 seconds');
-      const timer = setTimeout(() => {
-        console.log('Timer triggered - showing popup for customer');
-        setShowPopup(true);
-      }, 2000);
-      
-      return () => {
-        console.log('Cleaning up customer timer');
-        clearTimeout(timer);
-      };
-    }
-
-    // Default - hide popup
-    console.log('Default case - hiding popup');
-    setShowPopup(false);
-  }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleClosePopup = () => {
     console.log('Closing popup');
