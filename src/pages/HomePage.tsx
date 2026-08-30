@@ -5,15 +5,9 @@ import { ArrowRight, X, Gift, Sparkles, Droplet, Award, Heart, Shield, Leaf } fr
 import whatsappLogo from "../assets/WhatsApp_icon.png";
 import { supabase } from '../lib/supabase';
 import type { Product, Category, Banner } from '../types';
-import ProductCardComponent from '../components/products/ProductCard';
+import ProductCard from '../components/products/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import ScrollToTop from '../components/ScrollToTop';
-import ProductCard from './ProductPage';
-
-const ProductCardItem = ({ product, index }: { product: Product; index: number }) => {
-  const Card = ProductCardComponent as any;
-  return <Card product={product} index={index} />;
-};
 
 export default function HomePage() {
   const { authUser } = useAuth();
@@ -137,111 +131,21 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    // Fetch products with categories through the junction table
-    const fetchProducts = async () => {
-      try {
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select(`
-            *,
-            categories!product_categories (
-              id,
-              name,
-              slug,
-              description,
-              image_url,
-              created_at,
-              updated_at
-            )
-          `)
-          .order('created_at', { ascending: false })
-          .limit(8);
-
-        if (productsError) {
-          console.error('Products error:', productsError);
-          setProducts([]);
-        } else {
-          console.log('Products fetched:', productsData);
-          setProducts((productsData as Product[]) ?? []);
-        }
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        setProducts([]);
-      }
-    };
-
-    // Fetch categories
-    const fetchCategories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .limit(6);
-
-        if (error) {
-          console.error('Categories error:', error);
-          setCategories([]);
-        } else {
-          console.log('Categories fetched:', data);
-          setCategories((data as Category[]) ?? []);
-        }
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setCategories([]);
-      }
-    };
-
-    // Fetch banners
-    const fetchBanners = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('banners')
-          .select('*')
-          .eq('active', true)
-          .order('sort_order');
-
-        if (error) {
-          console.error('Banners error:', error);
-          setBanners([]);
-        } else {
-          console.log('Banners fetched:', data);
-          setBanners((data as Banner[]) ?? []);
-        }
-      } catch (err) {
-        console.error('Error fetching banners:', err);
-        setBanners([]);
-      }
-    };
-
-    // Fetch default banner
-    const fetchDefaultBanner = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('banners')
-          .select('*')
-          .eq('sort_order', 1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Default banner error:', error);
-          setDefaultBanner(null);
-        } else {
-          console.log('Default banner fetched:', data);
-          setDefaultBanner(data as Banner ?? null);
-        }
-      } catch (err) {
-        console.error('Error fetching default banner:', err);
-        setDefaultBanner(null);
-      }
-    };
-
-    // Fetch all data
     Promise.all([
-      fetchProducts(),
-      fetchCategories(),
-      fetchBanners(),
-      fetchDefaultBanner()
-    ]).then(() => {
+      supabase.from('products').select('*, categories(*)').order('created_at', { ascending: false }).limit(8),
+      supabase.from('categories').select('*').limit(6),
+      supabase.from('banners').select('*').eq('active', true).order('sort_order'),
+      supabase.from('banners').select('*').eq('sort_order', 1).maybeSingle(),
+    ]).then(([prods, cats, bans, defaultBan]) => {
+      if (prods.error) console.error('Products error:', prods.error);
+      if (cats.error) console.error('Categories error:', cats.error);
+      if (bans.error) console.error('Banners error:', bans.error);
+      if (defaultBan.error) console.error('Default banner error:', defaultBan.error);
+
+      setProducts((prods.data as Product[]) ?? []);
+      setCategories((cats.data as Category[]) ?? []);
+      setBanners((bans.data as Banner[]) ?? []);
+      setDefaultBanner((defaultBan.data as Banner) ?? null);
       setDataLoaded(true);
     });
   }, []);

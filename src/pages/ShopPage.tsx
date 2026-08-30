@@ -1,12 +1,10 @@
-import { useEffect, useState, useCallback, type ComponentType } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, X, ChevronDown, Search, Grid3X3, Sparkles, Tag, Filter } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
 import ProductCard from '../components/products/ProductCard';
-
-const ProductCardComponent = ProductCard as ComponentType<{ product: Product; index: number }>;
 
 const SORT_OPTIONS = [
   { label: 'Newest', value: 'newest' },
@@ -539,7 +537,7 @@ export default function ShopPage() {
             ) : (
               <div className={`grid gap-4 sm:gap-6 ${getGridClasses()}`}>
                 {products.map((p, i) => (
-                  <ProductCardComponent key={p.id} product={p} index={i} />
+                  <ProductCard key={p.id} product={p} index={i} />
                 ))}
               </div>
             )}
