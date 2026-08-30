@@ -8,7 +8,12 @@ export interface User {
   role: 'customer' | 'admin';
   has_used_signup_discount: boolean;
   avatar_url?: string | null;
-  created_at: string;
+  email_verified: boolean;
+  verified_at?: string;
+  verification_code?: string;
+  verification_expiry?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // For registration
