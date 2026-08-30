@@ -325,7 +325,7 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authUser) { 
-      navigate('/login'); 
+      navigate('/register'); 
       return; 
     }
     setLoading(true);
