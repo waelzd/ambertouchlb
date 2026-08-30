@@ -38,7 +38,7 @@ export default function CheckoutPage() {
     country: 'LE',
   });
 
-  const shippingCost = 3;
+  const shippingCost = 4;
 
   // First-order 10% discount
   const isDiscountEligible = !!profile && !profile.has_used_signup_discount;

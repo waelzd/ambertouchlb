@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function CartPage() {
   const { items, removeItem, updateQty, subtotal, clearCart } = useCart();
 
-  const shipping = 3;
+  const shipping = 4;
   const total = subtotal + shipping;
 
   if (items.length === 0) {
