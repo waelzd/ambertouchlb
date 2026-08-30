@@ -58,52 +58,41 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic - SIMPLIFIED
+  // Show popup logic - Works for all users
   useEffect(() => {
-    // Don't show popup if still checking user
-    if (isCheckingUser) return;
-
-    // CASE 1: User is logged in
-    if (authUser) {
-      // Admin - never show popup
-      if (userRole === 'admin') {
-        setShowPopup(false);
-        return;
-      }
-      
-      // Customer - only show if they haven't used the discount
-      if (userRole === 'customer') {
-        setShowPopup(!hasUsedDiscount);
-        return;
-      }
-      
-      // If role is unknown, don't show
+    // Check if user is admin
+    if (authUser && userRole === 'admin') {
       setShowPopup(false);
       return;
     }
 
-    // CASE 2: User is NOT logged in (visitor)
-    // Check localStorage for dismissal
+    // Check if user is a customer who has already used the discount
+    if (authUser && userRole === 'customer' && hasUsedDiscount) {
+      setShowPopup(false);
+      return;
+    }
+
+    // For all other cases (visitors + customers who haven't used discount)
+    // Check localStorage first
     const hasDismissed = localStorage.getItem('welcomePopupDismissed');
     
     if (hasDismissed === 'true') {
       setShowPopup(false);
-    } else {
-      // Show popup after 2 seconds
-      const timer = setTimeout(() => {
-        setShowPopup(true);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
+      return;
     }
-  }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
+
+    // Show popup after 2 seconds
+    const timer = setTimeout(() => {
+      setShowPopup(true);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [authUser, hasUsedDiscount, userRole]);
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    // Store dismissal in localStorage for non-authenticated users
-    if (!authUser) {
-      localStorage.setItem('welcomePopupDismissed', 'true');
-    }
+    // Store dismissal in localStorage for all users
+    localStorage.setItem('welcomePopupDismissed', 'true');
   };
 
   // Handle signup - mark discount as used when user creates account
