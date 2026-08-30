@@ -82,27 +82,57 @@ export default function HomePage() {
       return;
     }
 
-    // Check if popup was dismissed
-    const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-    console.log('Popup dismissed in localStorage:', hasDismissed);
-    
-    if (hasDismissed === 'true') {
-      console.log('Popup was dismissed, hiding');
-      setShowPopup(false);
-      return;
+    // For visitors (authUser is null), ALWAYS show popup UNLESS they dismissed it
+    if (!authUser) {
+      const hasDismissed = localStorage.getItem('welcomePopupDismissed');
+      console.log('Visitor - Popup dismissed in localStorage:', hasDismissed);
+      
+      if (hasDismissed === 'true') {
+        console.log('Visitor dismissed popup before, hiding');
+        setShowPopup(false);
+        return;
+      }
+
+      // Show popup after 2 seconds for visitors
+      console.log('Showing popup for visitor after 2 seconds');
+      const timer = setTimeout(() => {
+        console.log('Timer triggered - showing popup for visitor');
+        setShowPopup(true);
+      }, 2000);
+      
+      return () => {
+        console.log('Cleaning up visitor timer');
+        clearTimeout(timer);
+      };
     }
 
-    // Show popup after 2 seconds
-    console.log('Showing popup after 2 seconds');
-    const timer = setTimeout(() => {
-      console.log('Timer triggered - showing popup');
-      setShowPopup(true);
-    }, 2000);
-    
-    return () => {
-      console.log('Cleaning up timer');
-      clearTimeout(timer);
-    };
+    // For logged-in customers who haven't used the discount
+    if (authUser && userRole === 'customer' && !hasUsedDiscount) {
+      const hasDismissed = localStorage.getItem('welcomePopupDismissed');
+      console.log('Customer - Popup dismissed in localStorage:', hasDismissed);
+      
+      if (hasDismissed === 'true') {
+        console.log('Customer dismissed popup before, hiding');
+        setShowPopup(false);
+        return;
+      }
+
+      // Show popup after 2 seconds for customers who haven't used discount
+      console.log('Showing popup for customer after 2 seconds');
+      const timer = setTimeout(() => {
+        console.log('Timer triggered - showing popup for customer');
+        setShowPopup(true);
+      }, 2000);
+      
+      return () => {
+        console.log('Cleaning up customer timer');
+        clearTimeout(timer);
+      };
+    }
+
+    // Default - hide popup
+    console.log('Default case - hiding popup');
+    setShowPopup(false);
   }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
 
   const handleClosePopup = () => {
