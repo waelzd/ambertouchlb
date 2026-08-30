@@ -671,11 +671,8 @@ export default function AdminProducts() {
                   <th className="text-left px-6 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider hidden md:table-cell">
                     Category
                   </th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
-                    Size
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider hidden lg:table-cell">
-                    Price
+                  <th className="text-left px-6 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    Size &amp; Price
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     Stock
@@ -689,13 +686,29 @@ export default function AdminProducts() {
                 {filtered.map((product, index) => {
                   const imageUrl = product.image_urls?.[0];
                   const isLowStock = product.stock_quantity < 5;
-                  const hasSale = product.sale_price && product.sale_price < product.price;
-                  const currentPrice = hasSale ? product.sale_price : product.price;
                   
                   // Get category name from the categories array
                   const categoriesData = (product as any).categories;
                   const categoryArray = Array.isArray(categoriesData) ? categoriesData : categoriesData ? [categoriesData] : [];
                   const categoryName = categoryArray.length > 0 ? categoryArray[0].name : '—';
+
+                  // Format sizes with prices
+                  const sizes = product.sizes ?? [];
+                  const formatSizes = () => {
+                    if (sizes.length === 0) {
+                      return '—';
+                    }
+                    return sizes.map((size, idx) => (
+                      <span key={idx} className="inline-block">
+                        <span className="font-medium text-neutral-900">{size.label}</span>
+                        <span className="text-neutral-400"> - </span>
+                        <span className="text-gold-600 font-medium">${size.price.toFixed(2)}</span>
+                        {idx < sizes.length - 1 && (
+                          <span className="text-neutral-300 mx-1">|</span>
+                        )}
+                      </span>
+                    ));
+                  };
 
                   return (
                     <motion.tr
@@ -732,23 +745,9 @@ export default function AdminProducts() {
                       <td className="px-6 py-4 text-neutral-900 hidden md:table-cell">
                         {categoryName}
                       </td>
-                      <td className="px-6 py-4 text-neutral-500 hidden lg:table-cell">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-gold-50 text-gold-700 text-xs font-medium border border-gold-200">
-                        {product.sizes && product.sizes.length > 0
-                          ? product.sizes.map(s => s.label).join(', ')
-                          : '—'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 hidden lg:table-cell">
-                        <div>
-                          <span className="font-medium text-neutral-900">
-                            ${currentPrice?.toFixed(2)}
-                          </span>
-                          {hasSale && (
-                            <span className="text-xs text-neutral-400 line-through ml-2">
-                              ${product.price.toFixed(2)}
-                            </span>
-                          )}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap items-center gap-1 text-sm">
+                          {formatSizes()}
                         </div>
                       </td>
                       <td className="px-6 py-4">
