@@ -58,43 +58,63 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic - Show for ALL visitors
+  // Show popup logic - COMPLETELY REWRITTEN
   useEffect(() => {
-    // If user is admin, never show popup
+    console.log('Popup check - authUser:', authUser, 'userRole:', userRole, 'hasUsedDiscount:', hasUsedDiscount, 'isCheckingUser:', isCheckingUser);
+    
+    // If still checking user, wait
+    if (isCheckingUser) {
+      console.log('Still checking user, waiting...');
+      return;
+    }
+
+    // Check if user is admin
     if (authUser && userRole === 'admin') {
+      console.log('User is admin, hiding popup');
       setShowPopup(false);
       return;
     }
 
-    // If user is a customer who has already used the discount, never show popup
+    // Check if user is a customer who has already used the discount
     if (authUser && userRole === 'customer' && hasUsedDiscount) {
+      console.log('Customer already used discount, hiding popup');
       setShowPopup(false);
       return;
     }
 
-    // Check if user dismissed the popup
+    // Check if popup was dismissed
     const hasDismissed = localStorage.getItem('welcomePopupDismissed');
+    console.log('Popup dismissed in localStorage:', hasDismissed);
+    
     if (hasDismissed === 'true') {
+      console.log('Popup was dismissed, hiding');
       setShowPopup(false);
       return;
     }
 
-    // Show popup after 2 seconds for ALL visitors (logged in or not)
+    // Show popup after 2 seconds
+    console.log('Showing popup after 2 seconds');
     const timer = setTimeout(() => {
+      console.log('Timer triggered - showing popup');
       setShowPopup(true);
     }, 2000);
     
-    return () => clearTimeout(timer);
-  }, [authUser, hasUsedDiscount, userRole]);
+    return () => {
+      console.log('Cleaning up timer');
+      clearTimeout(timer);
+    };
+  }, [authUser, hasUsedDiscount, isCheckingUser, userRole]);
 
   const handleClosePopup = () => {
+    console.log('Closing popup');
     setShowPopup(false);
-    // Store dismissal in localStorage
     localStorage.setItem('welcomePopupDismissed', 'true');
+    console.log('Popup dismissed saved to localStorage');
   };
 
   // Handle signup - mark discount as used when user creates account
   const handleSignUp = async () => {
+    console.log('Sign up clicked');
     if (authUser) {
       // Mark the discount as used when user signs up
       try {
@@ -106,6 +126,7 @@ export default function HomePage() {
         if (error) {
           console.error('Error updating discount status:', error);
         } else {
+          console.log('Discount marked as used');
           setHasUsedDiscount(true);
           setShowPopup(false);
         }
@@ -286,9 +307,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal - Shows for ALL visitors unless dismissed or discount already used */}
+      {/* Popup Modal - Shows for ALL visitors */}
       {showPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
           <div 
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={handleClosePopup}
