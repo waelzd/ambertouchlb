@@ -58,7 +58,7 @@ export default function HomePage() {
     checkUserDiscountStatus();
   }, [authUser]);
 
-  // Show popup logic - SIMPLIFIED
+  // Show popup logic - SHOW ON EVERY REFRESH
   useEffect(() => {
     console.log('Checking popup - isCheckingUser:', isCheckingUser, 'authUser:', authUser);
     
@@ -84,17 +84,9 @@ export default function HomePage() {
       return;
     }
 
-    // Check if popup was dismissed
-    const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-    console.log('Popup dismissed in localStorage:', hasDismissed);
-    
-    if (hasDismissed === 'true') {
-      console.log('Popup was dismissed, hiding');
-      setShowPopup(false);
-      return;
-    }
+    // REMOVED: localStorage check - popup will show on every refresh
 
-    // SHOW POPUP! - This runs when isCheckingUser is false and no conditions block it
+    // SHOW POPUP on every refresh!
     console.log('Showing popup now!');
     setShowPopup(true);
     
@@ -107,8 +99,8 @@ export default function HomePage() {
     const timer = setTimeout(() => {
       console.log('Timer triggered!');
       // Check again if popup should show
-      const hasDismissed = localStorage.getItem('welcomePopupDismissed');
-      if (hasDismissed !== 'true' && !showPopup && !isCheckingUser) {
+      // REMOVED: localStorage check
+      if (!showPopup && !isCheckingUser) {
         // Check if user is admin
         if (authUser && userRole === 'admin') return;
         // Check if user is customer and used discount
@@ -124,8 +116,7 @@ export default function HomePage() {
   const handleClosePopup = () => {
     console.log('Closing popup');
     setShowPopup(false);
-    localStorage.setItem('welcomePopupDismissed', 'true');
-    console.log('Popup dismissed saved to localStorage');
+    // REMOVED: localStorage.setItem('welcomePopupDismissed', 'true');
   };
 
   // Handle signup - mark discount as used when user creates account
@@ -152,7 +143,7 @@ export default function HomePage() {
     }
     
     setShowPopup(false);
-    localStorage.setItem('welcomePopupDismissed', 'true');
+    // REMOVED: localStorage.setItem('welcomePopupDismissed', 'true');
     
     // Navigate to register page
     window.location.href = '/register';
@@ -323,7 +314,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal - Shows for ALL visitors */}
+      {/* Popup Modal - Shows on every refresh for eligible users */}
       {showPopup && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
           <div 
