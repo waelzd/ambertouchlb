@@ -6,9 +6,8 @@ import { useWishlist } from '../../context/WishlistContext';
 
 export default function CartDrawer() {
   const { items, isOpen, dispatch, removeItem, updateQty, subtotal, totalItems } = useCart();
-  const { items: wishlistItems, toggleWishlist, isInWishlist } = useWishlist();
-  const shippingCost = 3;
-
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const shippingCost = 4;
   const handleToggleWishlist = async (productId: string) => {
     if (!productId) return;
     await toggleWishlist(productId);

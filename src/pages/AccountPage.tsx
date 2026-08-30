@@ -230,7 +230,7 @@ function EditOrderModal({
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shippingCost = 3;
+  const shippingCost = 4;
   const total = subtotal - (order.discount_amount ?? 0) + shippingCost;
 
   const validateField = (field: keyof typeof shipping, value: string) => {
