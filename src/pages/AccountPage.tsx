@@ -683,7 +683,7 @@ function EditOrderModal({
 }
 
 function ProfileTab() {
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, loading: authLoading } = useAuth();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [originalFullName, setOriginalFullName] = useState('');
