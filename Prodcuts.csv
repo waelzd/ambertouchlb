@@ -1,0 +1,371 @@
+id,name,description,sale_price,stock_quantity,category_id,image_urls,created_at,updated_at,code,sizes,price,slug
+65848984-dea3-460d-bff5-5500381d7aab,JPG Ultra Male,"Notes: Pear, Lavender, Mint, Cinnamon, Vanilla & Amber
+
+A fresh and fruity opening with juicy pear and mint, balanced by warm cinnamon and smooth lavender. It settles into a sweet, creamy vanilla and amber trail that feels playful, confident and addictive.
+
+Best for: Evening • Dates • Parties • Spring & Fall",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787910573917-ssfu26j8lsb.PNG""]",2026-08-28 09:49:39.617309,2026-08-28 09:49:39.617309,1001,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,jpg-ultra-male
+103d0c3b-68c8-4305-98a2-70a5df11a1c5,JPG Le Male Elixir,"Notes: Lavender, Tonka Bean, Honey, Benzoin & Tobacco
+
+A rich and addictive fragrance with smooth lavender, warm honey and sweet tonka bean, deepened by benzoin and tobacco. Dark, warm and irresistibly masculine, with a powerful sweet trail.
+
+Best for: Evening • Dates • Special occasions • Cold weather",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787910672917-s2k7gwvyv4.PNG""]",2026-08-28 09:51:18.019356,2026-08-28 09:51:18.019356,1002,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,jpg-le-male-elixir
+c469abee-f41e-49d9-af7c-f70e0ec426fb,JPG Le Beau,"Notes: Coconut Wood, Tonka Bean & Bergamot
+
+A fresh and tropical fragrance with sparkling bergamot, creamy coconut wood and a smooth touch of tonka bean. Fresh, sensual and effortlessly attractive.
+
+Best for: Daytime • Dates • Summer • Spring",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787910743317-bwdbnznk41s.PNG""]",2026-08-28 09:52:29.069297,2026-08-28 09:52:29.069297,1003,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,jpg-le-beau
+fc3822f1-ccb9-431e-8514-0b0a9b72f5c5,Baccarat Rouge 540,"Notes: Saffron, Jasmine, Amberwood, Ambergris, Fir Resin & Cedar
+
+A radiant and elegant fragrance with spicy saffron and airy jasmine, melting into a warm, woody amber trail. Luxurious, sophisticated and unforgettable, with a scent that stays in the air long after you leave.
+
+Best for: Evening • Special occasions • All seasons",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787910808637-yjc71a3y6dp.PNG""]",2026-08-28 09:53:34.465689,2026-08-28 09:53:34.465689,1004,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,baccarat-rouge-540
+ec97ae4f-34d1-4677-8d99-871e1578193e,Stronger with you Absolutely,"Notes: Rum, Chestnut, Cedar & Vanilla
+
+A warm and addictive fragrance with rich rum and creamy chestnut, balanced by smooth cedar and sweet vanilla. Cozy, seductive and effortlessly masculine, with a deliciously deep trail.
+
+Best for: Evening • Dates • Cold weather • Special occasions",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787910885261-1alhf3xv62x.PNG""]",2026-08-28 09:54:50.630784,2026-08-28 09:54:50.630784,1005,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,stronger-with-you-absolutely
+c175e09a-2571-4994-9fd3-5fb929219bc9,Stronger With You Intensely,"Notes: Pink Pepper, Juniper, Toffee, Lavender, Cinnamon, Vanilla & Tonka Bean
+
+A warm and addictive fragrance that blends spicy freshness with rich toffee, cinnamon and smooth vanilla. Sweet, deep and confidently masculine, with a cozy trail that feels impossible to ignore.
+
+Best for: Evening • Dates • Cold weather • Special occasions",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911132781-i6fti8zbjy.PNG""]",2026-08-28 09:58:56.892438,2026-08-28 09:58:56.892438,1006,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,stronger-with-you-intensely
+d8f48e3e-43f9-48dc-b7d6-9aa2fbe388e7,Parfum De Marly Althair,"Notes: Cinnamon, Orange Blossom, Bourbon Vanilla, Elemi & Guaiac Wood
+
+A warm and elegant fragrance blending spicy cinnamon with bright orange blossom and rich bourbon vanilla. Smooth, creamy and sophisticated, with a soft woody trail that feels luxurious and addictive.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911283053-i6yo0vbwx9l.PNG""]",2026-08-28 10:01:27.497121,2026-08-28 10:01:27.497121,1007,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,parfum-de-marly-althair
+81bd7d0a-9492-4724-ad66-e9b49d0bc335,Mont Blanc Explorer,"Notes: Bergamot, Pink Pepper, Clary Sage, Haitian Vetiver, Leather, Ambroxan & Patchouli
+
+A fresh and adventurous fragrance with bright bergamot and spicy pink pepper, settling into a smooth woody blend of vetiver, leather and ambroxan. Clean, masculine and effortlessly confident.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911377450-j37f0eo0fgh.PNG""]",2026-08-28 10:03:00.569873,2026-08-28 10:03:00.569873,1008,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,mont-blanc-explorer
+5ad26a24-655b-4ee4-a4d8-86d1fda3d7f5,Mont Blanc Legend,"Notes: Bergamot, Lavender, Pineapple, Apple, Tonka Bean & Sandalwood
+
+A fresh and effortlessly masculine fragrance with crisp fruits, smooth lavender and a warm touch of tonka bean and sandalwood. Clean, confident and timeless, with a subtle sweetness that feels easy to wear.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911451589-2t2iv0ua8n2.PNG""]",2026-08-28 10:04:15.723367,2026-08-28 10:04:15.723367,1009,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,mont-blanc-legend
+21808086-c315-4cbc-b4e0-0d34d5b8fc3a,Verscage Eros,"Notes: Mint, Green Apple, Lemon, Tonka Bean, Ambroxan, Geranium, Vanilla & Cedarwood
+
+A fresh and energetic fragrance with crisp mint, juicy green apple and bright lemon, balanced by creamy vanilla and warm tonka bean. Bold, youthful and confidently masculine.
+
+Best for: Daytime • Dates • Parties • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911514965-kerf3y0806.PNG""]",2026-08-28 10:05:18.524319,2026-08-28 10:05:18.524319,1010,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,verscage-eros
+98820a12-3e4c-4239-ad48-4d282f3e470b,Allure Homme Sport,"Notes: Orange, Lemon, Aldehydes, Pepper, Cedar, Vetiver, Tonka Bean, Vanilla & White Musk
+
+A fresh and energetic fragrance with bright citrus and a clean, slightly spicy opening, settling into smooth woods, creamy tonka and soft vanilla. Sporty, elegant and effortlessly masculine.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911666541-c2wlj5xlxxe.PNG""]",2026-08-28 10:08:00.641001,2026-08-28 10:08:00.641001,1011,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,allure-homme-sport
+62820b9c-b926-4090-94dd-f91d14869106,Tom Ford Tobacco Vanilla,"Notes: Tobacco Leaf, Vanilla, Cacao, Tonka Bean, Dried Fruits & Woody Notes
+
+A rich and warm fragrance blending sweet vanilla with deep tobacco, creamy cacao and smooth tonka bean. Luxurious, cozy and seductive, with a dark sweetness that feels irresistibly elegant.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911775767-log8v8wf01.PNG""]",2026-08-28 10:09:41.234637,2026-08-28 10:09:41.234637,1012,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,tom-ford-tobacco-vanilla
+ede8c876-a68a-4b30-aac5-3f4b89fe4e08,Tom Ford Ombre Leather,"Notes: Cardamom, Jasmine, Leather, Amber, Moss & Patchouli
+
+A bold and sophisticated fragrance built around rich leather, warmed by spicy cardamom and softened by smooth jasmine. Dark, confident and effortlessly luxurious, with a powerful leather trail.
+
+Best for: Evening • Special occasions • Dates • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911851625-zfm7ijg4mim.PNG""]",2026-08-28 10:10:55.662921,2026-08-28 10:10:55.662921,1013,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,tom-ford-ombre-leather
+baed42c0-4cd3-4aca-81ce-8eab708a0747,Tom Ford Oud Wood,"Notes: Rosewood, Cardamom, Pepper, Oud, Sandalwood, Vetiver, Tonka Bean, Amber & Vanilla
+
+A smooth and sophisticated fragrance blending spicy cardamom and pepper with rich oud, creamy sandalwood and warm amber. Elegant, refined and quietly luxurious.
+
+Best for: Evening • Special occasions • Formal occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911912165-2xallkn8uys.PNG""]",2026-08-28 10:11:57.064774,2026-08-28 10:11:57.064774,1014,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,tom-ford-oud-wood
+126d8e95-6d6c-4dbd-a571-f876874359ec,Tom Ford Bitter Peach,"Notes: Peach, Blood Orange, Rum, Cognac, Davana, Patchouli, Sandalwood & Vanilla
+
+A juicy and sensual fragrance opening with ripe peach and vibrant blood orange, warmed by rich rum and cognac. Smooth, sweet and seductive, with a warm woody finish that feels luxurious and addictive.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787911963816-f27d76kv28u.PNG""]",2026-08-28 10:12:48.162273,2026-08-28 10:12:48.162273,1015,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,tom-ford-bitter-peach
+9486d6be-7aa5-4603-9fdd-dfa2c08ca854,Tom Ford Neroli Portofino,"Notes: Bergamot, Mandarin, Lemon, Neroli, Orange Blossom, Lavender & Amber
+
+A bright and refreshing fragrance with sparkling citrus, elegant neroli and soft orange blossom. Clean, airy and effortlessly luxurious, like a fresh breeze along the Mediterranean coast.
+
+Best for: Daytime • Summer • Vacations • Casual occasions",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912029526-wg03zgzbpp.PNG""]",2026-08-28 10:13:54.060303,2026-08-28 10:13:54.060303,1016,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,tom-ford-neroli-portofino
+b4f49aed-9031-4c7b-9543-77a57f878103,Lv Imagination,"Notes: Bergamot, Lemon, Neroli, Ginger, Cinnamon, Black Tea, Ambrox & Olibanum
+
+A bright and refreshing fragrance with sparkling citrus and spicy ginger, softened by smooth black tea and warm amber. Clean, sophisticated and effortlessly fresh, with an elegant trail that feels luxurious.
+
+Best for: Daytime • Work • Summer • Spring • Casual occasions",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912287679-sl7adkdmrf.PNG""]",2026-08-28 10:18:13.591231,2026-08-28 10:18:13.591231,1017,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,lv-imagination
+a32b02bb-f87a-42f8-a5ed-ed7e5e1dd8a8,Lv Pacific Chill,"Notes: Blackcurrant, Lemon, Orange, Apricot, Mint, Basil, Carrot Seed & Fig
+
+A fresh and uplifting fragrance with juicy blackcurrant, bright citrus and cool mint, softened by sweet apricot and creamy fig. Clean, vibrant and refreshing, like a chilled escape on a sunny day.
+
+Best for: Daytime • Summer • Spring • Vacations",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912362894-b9li496pv2e.PNG""]",2026-08-28 10:19:26.859121,2026-08-28 10:19:26.859121,1018,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,lv-pacific-chill
+4ad20e2c-233e-416d-bd31-7d779bc2fbfe,Lv Afternoon Swim,"Notes: Bergamot, Orange, Mandarin & Ginger
+
+A bright and refreshing burst of juicy citrus, blending sparkling bergamot, orange and mandarin with a subtle touch of ginger. Fresh, energetic and effortlessly uplifting, like diving into cool water on a sunny day.
+
+Best for: Daytime • Summer • Vacations • Casual occasions",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912408766-bwurcof0r7r.PNG""]",2026-08-28 10:20:13.546092,2026-08-28 10:20:13.546092,1019,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,lv-afternoon-swim
+f0c5aa61-7771-425d-b7b9-99219b953348,Lv Umbre Nomade,"Notes: Oud, Raspberry, Saffron, Birch, Incense, Rose & Amberwood
+
+A deep and luxurious fragrance blending rich oud with juicy raspberry, warm saffron and smoky incense. Dark, bold and sophisticated, with a powerful woody trail that leaves a lasting impression.
+
+Best for: Evening • Special occasions • Formal occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912459910-9boxsi96ja7.PNG""]",2026-08-28 10:21:03.573403,2026-08-28 10:21:03.573403,1020,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,lv-umbre-nomade
+e855199b-062f-4b85-8e1f-9bc5791c9733,Sauvage,"Notes: Bergamot, Pepper, Ambroxan, Lavender, Geranium, Patchouli, Vetiver & Cedar
+
+A fresh and powerful fragrance with bright bergamot and spicy pepper, settling into a smooth blend of ambroxan, woods and aromatic notes. Clean, bold and effortlessly masculine.
+
+Best for: Daytime • Evening • Dates • All seasons",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912505318-i542ji022eh.PNG""]",2026-08-28 10:21:48.600764,2026-08-28 10:21:48.600764,1021,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,sauvage
+87801954-bb2e-47c1-8666-0ce4553ef803,Sauvage Elixir,"Notes: Cinnamon, Nutmeg, Cardamom, Lavender, Licorice, Sandalwood, Amber & Patchouli
+
+A rich and powerful fragrance with warm spices, aromatic lavender and a smooth touch of licorice. Deep, intense and confidently masculine, with a warm woody trail that feels luxurious and unforgettable.
+
+Best for: Evening • Special occasions • Cold weather • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912553334-qrswsbmsx3r.PNG""]",2026-08-28 10:22:38.857956,2026-08-28 10:22:38.857956,1022,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,sauvage-elixir
+64097483-f70e-4caf-8554-d9b71701a2c2,Fehrenhite,"Notes: Mandarin, Violet Leaf, Leather, Nutmeg, Clove, Cedar & Vetiver
+
+A bold and distinctive fragrance blending fresh mandarin with green violet leaf, warm spices and rich leather. Deep, masculine and timeless, with a unique character that stands out from the crowd.
+
+Best for: Evening • Casual occasions • Fall & Winter • Cooler days",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912598150-ec4deo68e7u.PNG""]",2026-08-28 10:23:22.5081,2026-08-28 10:23:22.5081,1023,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,fehrenhite
+45e27e42-9927-4e07-9243-552cbbb0368b,Dior Homme Intense,"Notes: Iris, Amber, Pear, Lavender, Vetiver & Cedar
+
+A smooth and elegant fragrance with soft iris and juicy pear, warmed by rich amber and balanced with refined woods. Sophisticated, sensual and effortlessly masculine, with a soft powdery finish.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912650318-00op002wp9ijj.PNG""]",2026-08-28 10:24:22.547814,2026-08-28 10:24:22.547814,1024,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,dior-homme-intense
+9b289853-bdee-4f65-97fc-88ccbf4fb0ce,Eternity,"Notes: Lavender, Green Botanicals, Bergamot, Lemon, Sandalwood, Vetiver & Amber
+
+A fresh and timeless fragrance blending crisp citrus and aromatic lavender with smooth woods and warm amber. Clean, classic and effortlessly masculine, with a refined everyday feel.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912694526-pm65e5okteo.PNG""]",2026-08-28 10:24:59.084042,2026-08-28 10:24:59.084042,1025,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,eternity
+081625fc-4e57-4fb5-921c-7b15310d80e7,Sculpture,"Notes: Lemon, Bergamot, Orange Blossom, Jasmine, Geranium, Vanilla, Tonka Bean & Cedar
+
+A bright and airy fragrance opening with fresh citrus and delicate orange blossom, settling into smooth vanilla and warm tonka bean. Clean, sweet and effortlessly charming, with a soft elegant trail.
+
+Best for: Daytime • Dates • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912738718-pepjp4iuwgl.PNG""]",2026-08-28 10:25:43.132733,2026-08-28 10:25:43.132733,1026,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,sculpture
+070b02f6-4a0b-4c41-9bec-7749c6e17623,Armani Code Black,"Notes: Lemon, Bergamot, Star Anise, Olive Blossom, Guaiac Wood, Leather & Tonka Bean
+
+A smooth and seductive fragrance blending fresh citrus with aromatic star anise, soft olive blossom and a warm touch of leather and tonka bean. Dark, elegant and effortlessly masculine.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912930047-5bxjyt8vr7j.PNG""]",2026-08-28 10:28:53.600251,2026-08-28 10:28:53.600251,1027,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,armani-code-black
+bac08733-7734-41aa-bae6-e75645fbab75,Givenchy Pi,"Notes: Mandarin, Rosemary, Tarragon, Anise, Neroli, Vanilla, Almond, Tonka Bean & Cedar
+
+A warm and comforting fragrance blending fresh citrus and aromatic herbs with creamy vanilla, almond and tonka bean. Smooth, sweet and inviting, with a soft woody warmth that feels effortlessly elegant.
+
+Best for: Evening • Dates • Casual occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787912973391-r3f85bholwc.PNG""]",2026-08-28 10:29:37.110079,2026-08-28 10:29:37.110079,1028,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,givenchy-pi
+9cad693f-749e-4b21-9f92-506202280f3e,One Million,"Notes: Blood Mandarin, Grapefruit, Mint, Cinnamon, Rose, Leather, Amber & Woody Notes
+
+A bold and addictive fragrance blending fresh citrus and mint with warm cinnamon, smooth rose and rich leather. Sweet, confident and attention-grabbing, with a warm amber finish.
+
+Best for: Evening • Parties • Dates • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913018551-j0r3sxdhx3.PNG""]",2026-08-28 10:30:22.421938,2026-08-28 10:30:22.421938,1029,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,one-million
+23d546b8-d670-4b5a-b5a5-7727a7f5db15,One Million Elixir,"Notes: Apple, Davana, Rose, Cedarwood, Vanilla, Tonka Bean & Patchouli
+
+A rich and addictive fragrance with juicy apple and soft rose, melting into creamy vanilla, warm tonka bean and smooth woods. Sweet, luxurious and confidently masculine, with a deep and irresistible trail.
+
+Best for: Evening • Dates • Parties • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913070110-01r0t032eu52.PNG""]",2026-08-28 10:31:15.022721,2026-08-28 10:31:15.022721,1030,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,one-million-elixir
+8d2b1bd6-374d-4c57-8e6c-c2cc61d73d5c,Nishan Hacivat,"Notes: Pineapple, Bergamot, Grapefruit, Jasmine, Patchouli, Cedarwood & Oakmoss
+
+A bright and powerful fragrance opening with juicy pineapple and sparkling citrus, balanced by elegant jasmine and deep woody notes. Fresh, sophisticated and confident, with a distinctive trail that leaves an impression.
+
+Best for: Daytime • Special occasions • Work • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913146031-2h04x9eahoz.PNG""]",2026-08-28 10:32:29.645125,2026-08-28 10:32:29.645125,1031,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,nishan-hacivat
+9cdd4464-e3ca-49ec-b5a7-16912c5f29bc,Megamare,"Notes: Bergamot, Lemon, Marine Notes, Seaweed, Calone, Cedarwood, Musk & Amber
+
+A powerful oceanic fragrance with salty marine notes, fresh citrus and a deep touch of seaweed. Raw, intense and mysterious, with an unmistakable scent of the open sea.
+
+Best for: Daytime • Summer • Beach • Vacations",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913188503-sw2uhnfe6r.PNG""]",2026-08-28 10:33:13.002597,2026-08-28 10:33:13.002597,1032,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,megamare
+c5ee8450-50da-4d62-a0ff-cb2c24964df4,Blue De Chanel,"Notes: Lemon, Grapefruit, Mint, Ginger, Cedar, Sandalwood, Incense & Amber
+
+A fresh and sophisticated fragrance blending bright citrus and cool mint with smooth woods and warm incense. Clean, elegant and effortlessly masculine, with a refined scent that works anywhere.
+
+Best for: Daytime • Work • Dates • All seasons",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913364446-o7j02nb2tp.PNG""]",2026-08-28 10:36:09.149079,2026-08-28 10:36:09.149079,1033,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,blue-de-chanel
+db532e2c-cefe-4aa0-85c5-f4a7762dd252,Silver Scent,"Notes: Lemon, Orange Blossom, Lavender, Cardamom, Geranium, Nutmeg, Tonka Bean & Woods
+
+A fresh and powerful fragrance opening with bright citrus and aromatic lavender, warmed by spicy cardamom and nutmeg. Bold, sweet and masculine, with a warm woody trail that feels confident and distinctive.
+
+Best for: Evening • Dates • Parties • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913413879-b897uowv6f.PNG""]",2026-08-28 10:36:57.008848,2026-08-28 10:36:57.008848,1034,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,silver-scent
+c9058dbd-0c9f-4c09-9b9e-a4faa97b7286,Montale Arabian Tonca,"Notes: Saffron, Bergamot, Rose, Oud, Tonka Bean, Sugar, Amber & White Musk
+
+A rich and seductive fragrance blending spicy saffron and rose with deep oud, sweet tonka bean and warm amber. Dark, sweet and powerful, with a luxurious trail that stays unforgettable.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913453831-35o9hzxihpn.PNG""]",2026-08-28 10:37:38.4342,2026-08-28 10:37:38.4342,1035,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,montale-arabian-tonca
+6c8156c0-c3e9-4150-babb-7254977aaf4e,Aqua Di Gio Profondo,"Notes: Marine Notes, Green Mandarin, Bergamot, Rosemary, Lavender, Cypress, Musk & Patchouli
+
+A fresh and aquatic fragrance blending sparkling citrus with cool marine notes and aromatic rosemary. Clean, modern and effortlessly masculine, with a smooth mineral-woody finish.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913496151-5ljwbpaj5md.PNG""]",2026-08-28 10:38:20.422119,2026-08-28 10:38:20.422119,1036,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,aqua-di-gio-profondo
+d3b4111d-0996-422f-ab12-4fa230d79253,212,"Notes: Green Notes, Bergamot, Mandarin, Cardamom, Pepper, Ginger, Lavender, Sandalwood & Musk
+
+A fresh and energetic fragrance blending crisp green notes and citrus with spicy ginger and cardamom. Clean, youthful and effortlessly masculine, with a smooth woody finish.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913649945-t3bntrfg55g.PNG""]",2026-08-28 10:40:54.624041,2026-08-28 10:40:54.624041,1037,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,212
+d34e3532-bd52-44d5-80e6-59ff6f9d9247,Verscage Eros Flame,"Notes: Mandarin, Lemon, Black Pepper, Rosemary, Geranium, Rose, Tonka Bean, Vanilla, Sandalwood & Cedarwood
+
+A vibrant and seductive fragrance blending bright citrus with spicy black pepper and aromatic rosemary. Smooth vanilla, tonka bean and warm woods create a rich, confident trail with a fiery edge.
+
+Best for: Evening • Dates • Parties • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913708151-8ir110loys9.PNG""]",2026-08-28 10:41:53.643899,2026-08-28 10:41:53.643899,1038,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,verscage-eros-flame
+ad82f730-4123-45f5-ad1d-d6fd0eea3d5b,Spice Bomb Extreme,"Notes: Black Pepper, Cinnamon, Tobacco, Saffron, Lavender, Vanilla & Cumin
+
+A rich and seductive fragrance blending spicy black pepper and cinnamon with warm tobacco and creamy vanilla. Deep, bold and intensely masculine, with a smooth sweetness that feels irresistible.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913753113-j41k501298.PNG""]",2026-08-28 10:42:37.388923,2026-08-28 10:42:37.388923,1039,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,spice-bomb-extreme
+1eee735e-8c9b-491c-9763-ce48319aa89a,Ana Al Abyad,"Notes: Bergamot, Orange, Jasmine, Vanilla, Musk, Sandalwood & Amber
+
+A soft and elegant fragrance blending bright citrus with delicate florals, creamy vanilla and warm amber. Clean, smooth and subtly sweet, with a comforting and sophisticated trail.
+
+Best for: Daytime • Dates • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913794000-5rae271grdc.PNG""]",2026-08-28 10:43:17.062382,2026-08-28 10:43:17.062382,1040,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,ana-al-abyad
+e379694b-95cf-4a78-8357-6d086fbde46c,Golden Dust,"Notes: Musk, Vanilla, Amber, Rose & Sandalwood
+
+A soft and luxurious fragrance with creamy musk, warm amber and a gentle touch of rose and vanilla. Smooth, clean and comforting, with an elegant sweetness that feels effortlessly refined.
+
+Best for: Daytime • Dates • Casual occasions • All seasons",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913833607-ntkct52nxvj.PNG""]",2026-08-28 10:43:56.275995,2026-08-28 10:43:56.275995,1041,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,golden-dust
+f9d75dc0-0b3c-4fdd-94ab-cdd0b72c8a59,Al Wissam,"Notes: Bergamot, Lemon, Rose, Geranium, Lavender, Sandalwood, Cedarwood & Musk
+
+A fresh and elegant fragrance blending bright citrus with aromatic lavender and soft rose. Smooth woods and musk add a clean, refined finish that feels effortlessly masculine.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913868519-oqnyxqcd8oe.PNG""]",2026-08-28 10:44:31.585583,2026-08-28 10:44:31.585583,1042,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,al-wissam
+fa6c4255-45b3-4d40-920d-6e1eec5ce7c7,Dior Homme Sport,"Notes: Bergamot, Lemon, Aldehydes, Pink Pepper, Frankincense, Woody Notes & Amber
+
+A fresh and energetic fragrance opening with sparkling citrus and a touch of spicy pink pepper. Smooth woods and warm amber add a refined masculine depth, making it clean, elegant and effortlessly confident.
+
+Best for: Daytime • Work • Dates • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913905175-8q8h6csj9ru.PNG""]",2026-08-28 10:45:09.025192,2026-08-28 10:45:09.025192,1043,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,dior-homme-sport
+65d66861-40b9-4036-a6b2-1772bf8cb923,Kenzo Pour Homme,"Notes: Seaweed, Bergamot, Lemon, Sage, Carnation, Jasmine, Cedarwood, Vetiver, Patchouli & Musk
+
+A fresh and distinctive fragrance blending salty marine notes with bright citrus and aromatic herbs. Deep woods, vetiver and musk create a clean yet powerful trail that feels natural and masculine.
+
+Best for: Daytime • Summer • Beach • Casual occasions",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913955280-f9mx6y5mx1.PNG""]",2026-08-28 10:45:58.701709,2026-08-28 10:45:58.701709,1044,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,kenzo-pour-homme
+22050ad4-0041-44a2-bee5-cc6f700f22bc,Valentino Oumo Intense,"Notes: Vanilla, Lavender, Iris, Leather & Tonka Bean
+
+A smooth and seductive fragrance blending aromatic lavender with creamy vanilla, soft iris and rich leather. Warm, elegant and confidently masculine, with a deep sweetness that feels irresistibly refined.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787913998415-xledmmac8e8.PNG""]",2026-08-28 10:46:41.07248,2026-08-28 10:46:41.07248,1045,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,valentino-oumo-intense
+a5a661e1-2e4a-4d45-ab50-186dc73f7ac5,La Nuit De L Homme,"Notes: Cardamom, Lavender, Cedarwood & Vetiver
+
+A smooth and seductive fragrance opening with spicy cardamom, softened by fresh lavender and refined woods. Warm, elegant and effortlessly masculine, with a subtle sensual trail.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914040143-e3pl8kfw4bj.PNG""]",2026-08-28 10:47:23.14351,2026-08-28 10:47:23.14351,1046,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,la-nuit-de-l-homme
+aac285c0-4163-4e53-b048-a6ccb79a60fb,Hudson Valley,"Notes: Bergamot, Grapefruit, Lavender, Cedarwood, Vetiver, Amber & Musk
+
+A fresh and refined fragrance blending bright citrus with aromatic lavender and smooth woods. Clean, calm and effortlessly masculine, with a warm musky finish that feels elegant and natural.
+
+Best for: Daytime • Work • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914254231-4u20q4mot9f.PNG""]",2026-08-28 10:50:58.595505,2026-08-28 10:50:58.595505,1047,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,hudson-valley
+799ede72-b0cb-473e-a9eb-646060b2f451,Coco Chanel,"Notes: Orange, Rose, Jasmine, Patchouli, Tonka Bean, Vanilla, Sandalwood & Musk
+
+A rich and elegant fragrance blending vibrant citrus with beautiful florals, warm patchouli and creamy vanilla. Sophisticated, sensual and timeless, with a deep and luxurious character.
+
+Best for: Evening • Special occasions • Dates • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914292247-8x7a818mii.PNG""]",2026-08-28 10:51:34.994724,2026-08-28 10:51:34.994724,1048,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,coco-chanel
+9b69667d-13aa-46f3-a534-8d1ab9b40dab,Addict Dior,"Notes: Mandarin Leaf, Jasmine Sambac, Orange Blossom, Bourbon Vanilla & Sandalwood
+
+A warm and sensual fragrance blending fresh mandarin with luminous jasmine and delicate orange blossom. Creamy vanilla and smooth sandalwood create a rich, feminine trail that feels elegant and addictive.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914328040-lxgn4b5zci.PNG""]",2026-08-28 10:52:12.23956,2026-08-28 10:52:12.23956,1049,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,addict-dior
+e846f984-0c6d-44f6-975c-5b1e18b5db72,Chanel Mademoiselle,"Notes: Orange, Bergamot, Rose, Jasmine, Patchouli, Vetiver, Vanilla & White Musk
+
+A fresh and elegant fragrance blending sparkling citrus with delicate rose and jasmine, softened by creamy vanilla and warm patchouli. Feminine, sophisticated and effortlessly charming, with a refined and memorable trail.
+
+Best for: Daytime • Dates • Special occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914368928-jrymrcy1kwj.PNG""]",2026-08-28 10:52:51.404674,2026-08-28 10:52:51.404674,1050,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,chanel-mademoiselle
+7b56c13d-fcad-4968-9678-df0ca016f5dd,Miss Dior,"Notes: Iris, Peony, Lily of the Valley, Rose, Centifolia Rose & Woody Notes
+
+A soft and elegant fragrance blending fresh florals with delicate rose and smooth woody notes. Feminine, romantic and effortlessly graceful, with a refined trail that feels timeless.
+
+Best for: Daytime • Dates • Special occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914421224-547yh0a86jn.PNG""]",2026-08-28 10:53:45.631544,2026-08-28 10:53:45.631544,1051,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,miss-dior
+0106ebfc-1b13-47fb-a8ee-2c4b30c01d5d,La Vie Est Belle,"Notes: Iris, Jasmine, Orange Blossom, Patchouli, Vanilla, Praline & Tonka Bean
+
+A sweet and elegant fragrance blending delicate florals with rich vanilla, creamy praline and warm patchouli. Feminine, comforting and irresistibly addictive, with a beautiful sweet trail.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914470240-0z3emsac2qxm.PNG""]",2026-08-28 10:54:32.61336,2026-08-28 10:54:32.61336,1052,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,la-vie-est-belle
+7d248000-b33b-4a75-bd1f-b0429de9f246,Burberry Goddess,"Notes: Lavender, Vanilla, Cacao & Vanilla Caviar
+
+A warm and radiant fragrance blending aromatic lavender with rich, creamy vanilla and a soft touch of cacao. Sweet, elegant and comforting, with a smooth feminine trail that feels effortlessly luxurious.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914514743-vf426hwcv39.PNG""]",2026-08-28 10:55:18.699751,2026-08-28 10:55:18.699751,1053,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,burberry-goddess
+7fcb4293-383d-4540-9d34-abf0d196a492,Burberry Her,"Notes: Strawberry, Raspberry, Blackberry, Blackcurrant, Jasmine, Violet, Musk & Amber
+
+A fruity and feminine fragrance bursting with juicy berries, softened by delicate jasmine and violet. Sweet, playful and effortlessly charming, with a smooth musky finish that feels fresh and addictive.
+
+Best for: Daytime • Dates • Casual occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914553888-f7p883ph2h5.PNG""]",2026-08-28 10:55:56.392153,2026-08-28 10:55:56.392153,1054,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,burberry-her
+f54b155a-c53b-4bc8-95f2-b79d21c0e59c,Angel Mugler,"Notes: Bergamot, Red Berries, Honey, Praline, Chocolate, Caramel, Patchouli & Vanilla
+
+A rich and addictive fragrance blending juicy fruits with sweet honey, praline, chocolate and caramel. Warm, bold and irresistibly gourmand, with a deep patchouli and vanilla trail.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914588976-jnhb6g5avag.PNG""]",2026-08-28 10:56:31.426567,2026-08-28 10:56:31.426567,1055,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,angel-mugler
+a77fa764-04a7-4ba1-a373-5cfb832f6711,Alien Top,"Notes: Jasmine Sambac, Cashmeran & White Amber
+
+A radiant and sensual fragrance centered around luminous jasmine, wrapped in smooth cashmeran and warm white amber. Elegant, mysterious and feminine, with a powerful trail that feels unforgettable.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787914631696-aj665tdxmql.PNG""]",2026-08-28 10:57:15.753878,2026-08-28 10:57:15.753878,1056,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,alien-top
+c15b8c95-ab49-4e2a-a1de-e0b036e59436,Ysl Libre,"Notes: Lavender, Orange Blossom, Jasmine, Mandarin, Vanilla, Musk & Cedarwood
+
+A fresh and elegant fragrance blending aromatic lavender with luminous orange blossom and soft jasmine. Creamy vanilla and smooth woods add warmth, creating a feminine, confident and effortlessly luxurious scent.
+
+Best for: Daytime • Dates • Special occasions • Spring & Fall",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915370097-i3b20hbwmoj.PNG""]",2026-08-28 11:09:34.544347,2026-08-28 11:09:34.544347,1057,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,ysl-libre
+606de6f7-b900-43ba-9fe6-8dd315b16210,Ysl Black Opuim,"Notes: Coffee, Pear, Pink Pepper, Orange Blossom, Jasmine, Vanilla, Patchouli & Cedarwood
+
+A bold and addictive fragrance blending rich coffee with juicy pear and delicate florals. Sweet vanilla and warm woods create a smooth, seductive trail that feels confident and unforgettable.
+
+Best for: Evening • Dates • Parties • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915406301-lg078ozmjg9.PNG""]",2026-08-28 11:10:10.469979,2026-08-28 11:10:10.469979,1058,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,ysl-black-opuim
+283d232d-0c06-4345-9516-256ac9edb05c,Dolce And Gabbana The One,"Notes: Grapefruit, Coriander, Basil, Cardamom, Ginger, Orange Blossom, Cedarwood, Amber & Tobacco
+
+A warm and elegant fragrance blending fresh citrus and aromatic spices with smooth tobacco, amber and woods. Sophisticated, confident and effortlessly masculine, with a subtle sensual warmth.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915457144-yi8gkjpra08.PNG""]",2026-08-28 11:11:00.28243,2026-08-28 11:11:00.28243,1059,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,dolce-and-gabbana-the-one
+f64d34e5-8cf7-46a6-8d87-66f4d49f60ef,Euphoria Women,"Notes: Pomegranate, Persimmon, Orchid, Lotus, Mahogany, Amber, Violet & Musk
+
+A sensual and mysterious fragrance blending juicy pomegranate with delicate florals and rich woody amber. Smooth, feminine and captivating, with a warm trail that feels effortlessly seductive.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915491297-i512hsvf7ak.PNG""]",2026-08-28 11:11:35.515397,2026-08-28 11:11:35.515397,1060,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,euphoria-women
+5e39cef7-a751-4aa3-8d63-c7053bf215ad,Escada Magnetism,"Notes: Blackcurrant, Lychee, Pineapple, Jasmine, Rose, Caramel, Vanilla, Amber, Sandalwood & Musk
+
+A sweet and seductive fragrance bursting with juicy fruits, delicate florals and rich caramel. Creamy vanilla, warm amber and smooth woods create a playful, feminine trail that feels irresistibly addictive.
+
+Best for: Evening • Dates • Parties • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915525808-r06taw87e1r.PNG""]",2026-08-28 11:12:09.361237,2026-08-28 11:12:09.361237,1061,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,escada-magnetism
+330199d0-a1a6-4594-a3fc-218fe32cd028,Good Girl,"Notes: Almond, Coffee, Tuberose, Jasmine, Tonka Bean, Cacao, Vanilla & Sandalwood
+
+A seductive blend of rich coffee and sweet almond, softened by luminous white florals. Creamy vanilla, tonka bean and cacao create a warm, addictive trail that feels bold, feminine and irresistibly confident.
+
+Best for: Evening • Dates • Parties • Special occasions",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915574213-1bfpgs5724n.PNG""]",2026-08-28 11:12:58.380731,2026-08-28 11:12:58.380731,1062,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,good-girl
+c8381772-18a2-475b-a642-ae87adeb27eb,Armani SI,"Notes: Almond, Coffee, Tuberose, Jasmine, Tonka Bean, Cacao, Vanilla & Sandalwood
+
+A bold and seductive fragrance blending rich coffee and sweet almond with creamy florals, vanilla and tonka bean. Warm, addictive and effortlessly feminine, with a confident trail that leaves a lasting impression.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915615072-yankg64lehd.PNG""]",2026-08-28 11:13:38.750337,2026-08-28 11:13:38.750337,1063,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,armani-si
+ef3018d5-2c89-4e8c-a177-d64f29f0e8a8,JPG Scandal,"Notes: Blood Orange, Honey, Gardenia, Orange Blossom, Peach, Caramel, Patchouli & Licorice
+
+A sweet and seductive fragrance blending juicy orange and delicate white florals with rich honey and caramel. Warm, playful and irresistibly feminine, with a bold sweet trail that gets noticed.
+
+Best for: Evening • Dates • Parties • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915672082-8yslao3sxnm.PNG""]",2026-08-28 11:14:35.419851,2026-08-28 11:14:35.419851,1064,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,jpg-scandal
+f8127b17-9f54-4400-aefb-ebe1653bda50,Victoria Secret Bombshell,"Notes: Passion Fruit, Grapefruit, Pineapple, Peony, Jasmine & Musk
+
+A fresh and playful fragrance bursting with juicy tropical fruits and bright florals. Light, feminine and effortlessly attractive, with a clean fruity trail that feels vibrant and uplifting.
+
+Best for: Daytime • Casual occasions • Dates • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915721112-p92qqaxk08o.PNG""]",2026-08-28 11:15:23.51755,2026-08-28 11:15:23.51755,1065,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,victoria-secret-bombshell
+fc02897d-9e98-4e60-b31a-41d12a49147f,Fantasy,"Notes: Kiwi, Lychee, White Chocolate, Cupcake, Jasmine, Orchid, Musk & Woods
+
+A sweet and playful fragrance blending juicy fruits with creamy white chocolate and a delicious cupcake accord. Soft florals and warm musk create a fun, feminine and irresistibly gourmand trail.
+
+Best for: Daytime • Dates • Casual occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915755754-r209su2t4o.PNG""]",2026-08-28 11:16:00.057485,2026-08-28 11:16:00.057485,1066,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,fantasy
+b1680e11-9f5a-4938-bf3a-01ea09a3068b,Armani My Way,"Notes: Orange Blossom, Bergamot, Tuberose, Indian Jasmine, Madagascar Vanilla, White Musk & Cedarwood
+
+A bright and elegant fragrance blending luminous white florals with fresh citrus and creamy vanilla. Feminine, radiant and effortlessly sophisticated, with a soft musky trail that feels beautifully refined.
+
+Best for: Daytime • Dates • Special occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915805193-hwo4yhe49or.PNG""]",2026-08-28 11:16:49.016955,2026-08-28 11:16:49.016955,1067,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,armani-my-way
+43ee4df5-a08e-4cc7-b823-9f27a9290cf6,Jadore,"Notes: Ylang-Ylang, Jasmine, Rose, Bergamot, Pear, Melon, Peach, Vanilla & Cedar
+
+A radiant and elegant fragrance blending juicy fruits with luminous jasmine, rose and ylang-ylang. Soft, feminine and luxurious, with a smooth floral trail that feels timeless and sophisticated.
+
+Best for: Daytime • Dates • Special occasions • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915855985-ep8okdgdnm.PNG""]",2026-08-28 11:17:38.854877,2026-08-28 11:17:38.854877,1068,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,jadore
+a321e462-6221-45e7-a0e3-102adf0dc5de,Prada Paradox,"Notes: Neroli, Orange Blossom, Bergamot, Jasmine, Bourbon Vanilla, Amber & White Musk
+
+A radiant and feminine fragrance blending fresh citrus and luminous white florals with warm vanilla and soft amber. Clean, sweet and effortlessly elegant, with a smooth modern trail that feels luxurious and addictive.
+
+Best for: Daytime • Dates • Special occasions • Spring & Fall",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915899385-s8mcnbua28.PNG""]",2026-08-28 11:18:22.206039,2026-08-28 11:18:22.206039,1069,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,prada-paradox
+af60eec9-7cce-46f3-8cb5-ea9e01676ee9,Kayalli Vanilla 28,"Notes: Vanilla Orchid, Tonka Bean, Brown Sugar, Amber Woods & Musk
+
+A rich and comforting fragrance blending creamy vanilla with warm brown sugar and smooth tonka bean. Sweet, sensual and addictive, with a deep amber warmth that feels cozy and luxurious.
+
+Best for: Evening • Dates • Layering • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915936009-68r7g0i3i6g.PNG""]",2026-08-28 11:18:59.965442,2026-08-28 11:18:59.965442,1070,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,kayalli-vanilla-28
+165e37e0-61a1-4576-a8f7-e7f3fd56f9ed,Kayalli Marshmallow Gelato,"Notes: Strawberry, Pink Marshmallow, Coconut, Vanilla, Whipped Cream & Musk
+
+A sweet and playful fragrance blending juicy strawberry with fluffy marshmallow, creamy coconut and smooth vanilla. Soft, delicious and irresistibly gourmand, with a dreamy sweetness that feels fun and addictive.
+
+Best for: Daytime • Dates • Casual occasions • Spring & Fall",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787915975907-rgu3bgyzze.PNG""]",2026-08-28 11:19:39.002401,2026-08-28 11:19:39.002401,1071,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,kayalli-marshmallow-gelato
+a9a2576c-f06f-4e6d-a30e-40edf27252e6,Shams Al Emarat,"Notes: Vanilla, Caramel, Rose, Jasmine, Amber, Musk, Oud & Sandalwood
+
+A rich and sweet fragrance blending creamy vanilla and caramel with soft florals, warm amber and smooth woods. Warm, luxurious and addictive, with an oriental sweetness that leaves a beautiful lasting trail.
+
+Best for: Evening • Dates • Special occasions • Fall & Winter",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787916017121-01hcrgz53vy2.PNG""]",2026-08-28 11:20:19.679981,2026-08-28 11:20:19.679981,1072,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,shams-al-emarat
+042a43cb-edff-4ccb-afc3-1725bd32e70c,Coco Vanilla Mancera,"Notes: Coconut, White Peach, Tiaré Flower, Ylang-Ylang, Jasmine, Vanilla, White Musk & Woody Notes
+
+A creamy tropical fragrance blending sweet coconut and juicy peach with exotic white florals and rich vanilla. Warm, sensual and effortlessly feminine, with a smooth beachy sweetness that feels luxurious and addictive.
+
+Best for: Daytime • Dates • Vacations • Spring & Summer",null,5,null,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787916059056-p04a03z28ld.PNG""]",2026-08-28 11:21:03.567552,2026-08-28 11:21:03.567552,1073,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,coco-vanilla-mancera
+7526aa84-b230-4e91-a679-124392ca2ac9,JPG Le Male Le Parfum,"Notes: Cardamom, Lavender, Iris & Vanilla
+
+A warm, seductive and effortlessly masculine scent, blending spicy freshness with smooth florals and rich creamy vanilla.
+
+Best for: Evening • Special occasions • Cold weather",null,5,76773547-d354-4c80-bb9d-fb13deb0e10e,"[""https://zzhwmxgjuesecmjoigfs.supabase.co/storage/v1/object/public/images/products/1787909426252-g543keodapl.PNG""]",2026-08-28 09:30:31.192088,2026-08-30 19:35:07.987269,1000,"[{""label"":""50ML"",""price"":10},{""label"":""100ML"",""price"":15}]",10,jpg-le-male-le-parfum
