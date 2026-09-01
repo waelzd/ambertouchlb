@@ -48,6 +48,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
+    // In your AuthContext provider
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setAuthUser(session.user);
+        // Fetch profile immediately on sign in
+        const profile = await getProfile(session.user.id);
+        if (profile) {
+          setProfile(profile);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setAuthUser(null);
+        setProfile(null);
+      }
+    }
+  );
+
+  // Initial session check
+  const initSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      setAuthUser(session.user);
+      const profile = await getProfile(session.user.id);
+      if (profile) {
+        setProfile(profile);
+      }
+    }
+    setLoading(false);
+  };
+  initSession();
+
+  return () => subscription.unsubscribe();
+}, []);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setAuthUser(session?.user ?? null);
@@ -77,105 +112,154 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null, role: profile?.role ?? null };
   };
 
-  // Updated signUp with isVerified parameter
-  const signUp = async (email: string, password: string, fullName: string, phone: string, isVerified: boolean = false) => {
-    try {
-      // First, check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id, email_verified')
-        .eq('email', email)
-        .maybeSingle();
+ // Updated signUp with isVerified parameter and immediate profile loading
+const signUp = async (email: string, password: string, fullName: string, phone: string, isVerified: boolean = false) => {
+  setLoading(true);
+  
+  try {
+    // First, check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id, email_verified, full_name, phone')
+      .eq('email', email)
+      .maybeSingle();
 
-      if (existingUser) {
-        // If user exists but is not verified, we can update their info
-        if (!existingUser.email_verified) {
-          const { error: updateError } = await supabase
-            .from('users')
-            .update({
-              full_name: fullName,
-              phone: phone,
-              email_verified: isVerified,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('email', email);
-
-          if (updateError) {
-            console.error('Update error:', updateError);
-            return { error: updateError.message, role: null };
-          }
-
-          // Get updated profile
-          const { data: updatedProfile } = await supabase
-            .from('users')
-            .select('role')
-            .eq('email', email)
-            .single();
-
-          return { error: null, role: updatedProfile?.role ?? 'customer' };
-        } else {
-          // User exists and is verified
-          return { error: 'An account with this email already exists', role: null };
-        }
-      }
-
-      // Only create Supabase auth user when verified
-      if (isVerified) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              phone: phone,
-              email_verified: true,
-            },
-          },
-        });
-
-        if (error) {
-          console.error('Signup error:', error);
-          return { error: error.message, role: null };
-        }
-
-        if (!data.user) {
-          return { error: 'No user returned from signup', role: null };
-        }
-
-        // Create user profile with email_verified flag
-        const { data: inserted, error: insertError } = await supabase
+    if (existingUser) {
+      // If user exists but is not verified, we can update their info
+      if (!existingUser.email_verified) {
+        const { error: updateError } = await supabase
           .from('users')
-          .insert({
-            id: data.user.id,
+          .update({
             full_name: fullName,
-            email: email,
             phone: phone,
-            role: 'customer',
-            has_used_signup_discount: true,
-            email_verified: true,
-            verified_at: new Date().toISOString(),
+            email_verified: isVerified,
+            updated_at: new Date().toISOString(),
           })
-          .select('role')
+          .eq('email', email);
+
+        if (updateError) {
+          console.error('Update error:', updateError);
+          setLoading(false);
+          return { error: updateError.message, role: null };
+        }
+
+        // Get updated profile
+        const { data: updatedProfile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
           .single();
 
-        if (insertError) {
-          console.error('Insert error:', insertError.message, insertError.code);
-          // If insert fails, try to clean up the auth user
-          await supabase.auth.admin.deleteUser(data.user.id).catch(console.error);
-          return { error: insertError.message, role: null };
+        if (!profileError && updatedProfile) {
+          // Set profile in context immediately
+          setProfile(updatedProfile);
         }
 
-        return { error: null, role: inserted?.role ?? 'customer' };
+        setLoading(false);
+        return { error: null, role: updatedProfile?.role ?? 'customer' };
       } else {
-        // For unverified signups, just store user data without creating auth account
-        // This is handled by the verification flow
-        return { error: null, role: null };
+        // User exists and is verified
+        setLoading(false);
+        return { error: 'An account with this email already exists', role: null };
       }
-    } catch (error) {
-      console.error('Signup error:', error);
-      return { error: error instanceof Error ? error.message : 'An unexpected error occurred', role: null };
     }
-  };
+
+    // Only create Supabase auth user when verified
+    if (isVerified) {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone: phone,
+            email_verified: true,
+          },
+        },
+      });
+
+      if (authError) {
+        console.error('Signup error:', authError);
+        setLoading(false);
+        return { error: authError.message, role: null };
+      }
+
+      if (!authData.user) {
+        setLoading(false);
+        return { error: 'No user returned from signup', role: null };
+      }
+
+      // Create user profile with email_verified flag
+      const { data: inserted, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          full_name: fullName,
+          email: email,
+          phone: phone,
+          role: 'customer',
+          has_used_signup_discount: true,
+          email_verified: true,
+          verified_at: new Date().toISOString(),
+        })
+        .select('*') // Select all fields
+        .single();
+
+      if (insertError) {
+        console.error('Insert error:', insertError.message, insertError.code);
+        // If insert fails, try to clean up the auth user
+        await supabase.auth.admin.deleteUser(authData.user.id).catch(console.error);
+        setLoading(false);
+        return { error: insertError.message, role: null };
+      }
+
+      // Set auth user and profile immediately
+      setAuthUser(authData.user);
+      setProfile(inserted);
+
+      setLoading(false);
+      return { error: null, role: inserted?.role ?? 'customer' };
+    } else {
+      // For unverified signups, just store user data without creating auth account
+      // This is handled by the verification flow
+      setLoading(false);
+      return { error: null, role: null };
+    }
+  } catch (error) {
+    console.error('Signup error:', error);
+    setLoading(false);
+    return { error: error instanceof Error ? error.message : 'An unexpected error occurred', role: null };
+  }
+};
+
+// Add this function to your AuthContext
+const getProfile = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return null;
+  }
+};
+
+// Also add a function to set profile from auth session
+const setProfileFromSession = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const profile = await getProfile(user.id);
+    if (profile) {
+      setProfile(profile);
+      setAuthUser(user);
+    }
+  }
+};
 
   // Check if email is verified
   const checkEmailVerification = async (email: string): Promise<{ verified: boolean; error: string | null }> => {
