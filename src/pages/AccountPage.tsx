@@ -694,14 +694,39 @@ function ProfileTab() {
   const [nameError, setNameError] = useState('');
   const [phoneError, setPhoneError] = useState('');
 
+   // Profile loading state
+  const [isProfileReady, setIsProfileReady] = useState(false);
+  
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name ?? '');
       setOriginalFullName(profile.full_name ?? '');
       setPhone(profile.phone ?? '');
       setOriginalPhone(profile.phone ?? '');
+      setIsProfileReady(true);
+    } else if (!authLoading) {
+      // If auth is done loading but profile is null, try to refresh
+      refreshProfile().then(() => {
+        setIsProfileReady(true);
+      });
     }
-  }, [profile]);
+  }, [profile, authLoading, refreshProfile]);
+
+  // Show loading state
+  if (authLoading || !isProfileReady) {
+    return (
+      <div>
+        <h2 className="text-2xl font-light text-white mb-8">Profile</h2>
+        <div className="space-y-4 max-w-md">
+          <div className="h-12 bg-white/5 animate-pulse rounded-xl" />
+          <div className="h-12 bg-white/5 animate-pulse rounded-xl" />
+          <div className="h-12 bg-white/5 animate-pulse rounded-xl" />
+          <div className="h-12 bg-gold-400/20 animate-pulse rounded-xl" />
+          <p className="text-sm text-neutral-400 text-center">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   const hasChanges = fullName.trim() !== originalFullName.trim() || phone !== originalPhone;
 
