@@ -96,3 +96,19 @@ export const trackPurchase = (total: number, items: { id: string }[]): void =>
   });
 
 export const trackLead = (): void => trackEvent('Lead');
+
+export const trackCompleteRegistration = (data: {
+  method?: string;
+  status?: boolean;
+} = {}): void =>
+  trackEvent('CompleteRegistration', {
+    content_name: 'Account Signup',
+    status: data.status ?? true,
+    method: data.method ?? 'email',
+  });
+
+  export const trackLogin = (method: string = 'email'): void =>
+  trackEvent('Login', {
+    content_name: 'Account Login',
+    method,
+  });

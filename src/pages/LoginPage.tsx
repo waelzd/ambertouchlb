@@ -1,15 +1,15 @@
+// LoginPage.tsx - With Meta Pixel tracking
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { trackLogin } from '../utils/metaPixel';
 
 interface FieldErrors {
   email?: string;
   password?: string;
 }
-
-//const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -46,12 +46,12 @@ export default function LoginPage() {
 
   const handleBlur = (field: 'email' | 'password') => {
     setTouched(prev => ({ ...prev, [field]: true }));
-    
+
     if (field === 'email') {
       const emailError = getEmailError(email);
       setFieldErrors(prev => ({ ...prev, email: emailError }));
     }
-    
+
     if (field === 'password') {
       const passwordError = getPasswordError(password);
       setFieldErrors(prev => ({ ...prev, password: passwordError }));
@@ -64,10 +64,10 @@ export default function LoginPage() {
 
     // Validate all fields
     const newErrors: FieldErrors = {};
-    
+
     const emailError = getEmailError(email);
     if (emailError) newErrors.email = emailError;
-    
+
     const passwordError = getPasswordError(password);
     if (passwordError) newErrors.password = passwordError;
 
@@ -87,6 +87,11 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
+
+    // ── Meta Pixel: Login ──────────────────────────────────
+    // Fires only after a successful authentication
+    trackLogin('email');
+    // ──────────────────────────────────────────────────────
 
     setLoading(false);
     navigate(role === 'admin' ? '/admin' : '/account');
@@ -250,9 +255,9 @@ export default function LoginPage() {
                       : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
                   }`}
                 />
-                <button 
-                  type="button" 
-                  onClick={() => setShowPass(!showPass)} 
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-gold-400 transition-colors"
                 >
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -291,9 +296,9 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <motion.button 
-              type="submit" 
-              disabled={loading} 
+            <motion.button
+              type="submit"
+              disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full py-3.5 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-gold-400/30 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"

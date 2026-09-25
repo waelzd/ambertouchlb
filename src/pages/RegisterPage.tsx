@@ -1,9 +1,10 @@
-// RegisterPage.tsx - Fully integrated version
+// RegisterPage.tsx - Fully integrated version with Meta Pixel
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle, XCircle, AlertCircle, Shield, Phone, Mail, Key } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { trackCompleteRegistration, trackLead } from '../utils/metaPixel';
 
 interface FieldErrors {
   fullName?: string;
@@ -35,7 +36,7 @@ export default function RegisterPage() {
     phone: false,
     verificationCode: false
   });
-  
+
   // Verification states
   const [showVerification, setShowVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
@@ -126,7 +127,7 @@ export default function RegisterPage() {
 
   const handleBlur = (field: 'password' | 'confirm' | 'fullName' | 'email' | 'phone' | 'verificationCode') => {
     setTouched(prev => ({ ...prev, [field]: true }));
-    
+
     if (field === 'password') {
       const errors = validatePassword(password);
       if (errors.length > 0) {
@@ -135,23 +136,23 @@ export default function RegisterPage() {
         setFieldErrors(prev => ({ ...prev, password: undefined }));
       }
     }
-    
+
     if (field === 'fullName') {
       const nameError = validateName(fullName);
       setFieldErrors(prev => ({ ...prev, fullName: nameError }));
     }
-    
+
     if (field === 'email') {
       setEmailTouched(true);
       const emailError = getEmailError(email);
       setFieldErrors(prev => ({ ...prev, email: emailError }));
     }
-    
+
     if (field === 'phone') {
       const phoneError = validatePhone(phone);
       setFieldErrors(prev => ({ ...prev, phone: phoneError }));
     }
-    
+
     if (field === 'confirm') {
       if (confirm && password && confirm !== password) {
         setFieldErrors(prev => ({ ...prev, confirm: 'Passwords do not match' }));
@@ -176,18 +177,18 @@ export default function RegisterPage() {
     const newErrors: FieldErrors = {};
     const nameError = validateName(fullName);
     if (nameError) newErrors.fullName = nameError;
-    
+
     const emailError = getEmailError(email);
     if (emailError) newErrors.email = emailError;
-    
+
     const phoneError = validatePhone(phone);
     if (phoneError) newErrors.phone = phoneError;
-    
+
     const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
       newErrors.password = passwordErrors.join(', ');
     }
-    
+
     if (!confirm.trim()) {
       newErrors.confirm = 'Please confirm your password';
     } else if (password !== confirm) {
@@ -195,13 +196,13 @@ export default function RegisterPage() {
     }
 
     setFieldErrors(newErrors);
-    setTouched(prev => ({ 
-      ...prev, 
-      fullName: true, 
-      email: true, 
+    setTouched(prev => ({
+      ...prev,
+      fullName: true,
+      email: true,
       phone: true,
-      password: true, 
-      confirm: true 
+      password: true,
+      confirm: true
     }));
 
     if (Object.keys(newErrors).length > 0) {
@@ -215,7 +216,7 @@ export default function RegisterPage() {
 
     try {
       const { verified, error: checkError } = await checkEmailVerification(email);
-      
+
       if (checkError) {
         throw new Error(checkError);
       }
@@ -264,6 +265,11 @@ export default function RegisterPage() {
       setShowVerification(true);
       setVerificationSuccess('Verification code sent to your email!');
       setResendCooldown(60);
+
+      // ── Meta Pixel: Lead ──────────────────────────────────
+      // Fires when the user begins registration (email verification sent)
+      trackLead();
+      // ──────────────────────────────────────────────────────
 
       // Clear any previous code errors
       setFieldErrors(prev => ({ ...prev, verificationCode: undefined }));
@@ -331,7 +337,12 @@ export default function RegisterPage() {
       }
 
       setVerificationSuccess('Account verified successfully!');
-      
+
+      // ── Meta Pixel: CompleteRegistration ──────────────────
+      // Fires only after the account is truly created
+      trackCompleteRegistration({ method: 'email', status: true });
+      // ──────────────────────────────────────────────────────
+
       // Small delay before navigation
       setTimeout(() => {
         setIsVerifying(false);
@@ -348,28 +359,28 @@ export default function RegisterPage() {
   // Resend verification code
   const handleResendCode = async () => {
     if (resendCooldown > 0) return;
-    
+
     setLoading(true);
     setVerificationError('');
-    
+
     try {
       const { success, error } = await resendVerificationEmail(email);
-      
+
       if (error) {
         throw new Error(error);
       }
-      
+
       if (success) {
         // Generate new code locally
         const newCode = generateVerificationCode();
         const newExpiry = generateVerificationExpiry();
-        
+
         setTempUserData(prev => ({
           ...prev!,
           code: newCode,
           expiry: newExpiry
         }));
-        
+
         setVerificationSuccess('New verification code sent!');
         setResendCooldown(60);
         setVerificationCode('');
@@ -456,7 +467,7 @@ export default function RegisterPage() {
               {showVerification ? 'Verify Your Email' : 'Create Account'}
             </h1>
             <p className="text-sm text-neutral-400">
-              {showVerification 
+              {showVerification
                 ? `We've sent a verification code to ${email}`
                 : 'Join our community of discerning customers'
               }
@@ -510,8 +521,8 @@ export default function RegisterPage() {
                   placeholder="Enter your full name"
                   maxLength={20}
                   className={`w-full px-4 py-3.5 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-300 ${
-                    fieldErrors.fullName 
-                      ? 'border-red-500/50 focus:ring-red-500/30 bg-red-500/5' 
+                    fieldErrors.fullName
+                      ? 'border-red-500/50 focus:ring-red-500/30 bg-red-500/5'
                       : touched.fullName && fullName && !fieldErrors.fullName
                       ? 'border-emerald-500/50 focus:ring-emerald-500/30 bg-emerald-500/5'
                       : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
@@ -679,9 +690,9 @@ export default function RegisterPage() {
                         : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
                     }`}
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowPass(!showPass)} 
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-gold-400 transition-colors"
                   >
                     {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -743,7 +754,7 @@ export default function RegisterPage() {
                     <div className="w-full h-1 bg-neutral-700/50 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ 
+                        animate={{
                           width: `${(getPasswordStrength() / 4) * 100}%`
                         }}
                         className={`h-full rounded-full transition-all duration-500 ${getStrengthColor()}`}
@@ -783,9 +794,9 @@ export default function RegisterPage() {
                         : 'border-neutral-700/50 focus:border-gold-400 focus:ring-gold-400/30 hover:border-neutral-600'
                     }`}
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowConfirmPass(!showConfirmPass)} 
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPass(!showConfirmPass)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-gold-400 transition-colors"
                   >
                     {showConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -817,9 +828,9 @@ export default function RegisterPage() {
               </div>
 
               {/* Submit button */}
-              <motion.button 
+              <motion.button
                 type="submit"
-                disabled={loading} 
+                disabled={loading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full py-3.5 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-gold-400/30 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
@@ -904,9 +915,9 @@ export default function RegisterPage() {
                 </AnimatePresence>
               </div>
 
-              <motion.button 
+              <motion.button
                 onClick={handleVerifyCode}
-                disabled={isVerifying || verificationCode.length !== 6} 
+                disabled={isVerifying || verificationCode.length !== 6}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full py-3.5 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-gold-400/30 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
@@ -930,8 +941,8 @@ export default function RegisterPage() {
                   disabled={resendCooldown > 0 || loading}
                   className="text-sm text-gold-400 hover:text-gold-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {resendCooldown > 0 
-                    ? `Resend code in ${resendCooldown}s` 
+                  {resendCooldown > 0
+                    ? `Resend code in ${resendCooldown}s`
                     : 'Resend verification code'
                   }
                 </button>
@@ -976,7 +987,7 @@ export default function RegisterPage() {
               Privacy Policy
             </a>
           </p>
-          
+
           <p className="mt-6 text-center text-sm text-neutral-400">
             Already have an account?{' '}
             <Link to="/login" className="text-gold-400 font-medium hover:text-gold-300 transition-colors">
