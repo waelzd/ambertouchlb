@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import type { Product } from '../types';
 import { supabase } from '../lib/supabase';
+import { trackAddToCart, trackPurchase } from '../utils/metaPixel';
 
 type CartLineItem = {
   id: string;
@@ -134,6 +135,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (itemsError) throw itemsError;
 
+      // ── Meta Pixel: Purchase ──────────────────────────────────
+      // Fire only after the order is confirmed in Supabase,
+      // and BEFORE we clear the cart (we need the items).
+      trackPurchase(
+        subtotal,
+        state.items.map((i) => ({ id: i.product.id }))
+      );
+      // ──────────────────────────────────────────────────────────
+
       dispatch({ type: 'CLEAR_CART' });
 
       return order;
@@ -149,8 +159,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       dispatch,
       totalItems,
       subtotal,
-      addItem: (product, color, size, price, quantity = 1) =>
-        dispatch({ type: 'ADD_ITEM', product, color, size, price, quantity }),
+      addItem: (product, color, size, price, quantity = 1) => {
+        dispatch({ type: 'ADD_ITEM', product, color, size, price, quantity });
+
+        // ── Meta Pixel: AddToCart ───────────────────────────────
+        trackAddToCart(
+          { id: product.id, name: product.name, price },
+          quantity
+        );
+        // ────────────────────────────────────────────────────────
+      },
       removeItem: (id) => dispatch({ type: 'REMOVE_ITEM', id }),
       updateQty: (id, quantity) => dispatch({ type: 'UPDATE_QTY', id, quantity }),
       clearCart: () => dispatch({ type: 'CLEAR_CART' }),

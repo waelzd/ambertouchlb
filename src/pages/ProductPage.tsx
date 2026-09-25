@@ -8,6 +8,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/products/ProductCard';
+import { trackViewContent } from '../utils/metaPixel';
 
 function resolveImageUrl(url: string): string {
   if (!url) return '';
@@ -67,6 +68,15 @@ export default function ProductPage() {
           `)
           .eq('slug', slug)
           .maybeSingle();
+
+          useEffect(() => {
+  if (!product) return;
+  trackViewContent({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+  });
+}, [product?.id]);
 
         if (productError) {
           console.error('Product fetch error:', productError);

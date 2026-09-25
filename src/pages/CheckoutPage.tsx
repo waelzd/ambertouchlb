@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { CheckCircle, Edit2, MapPin, Truck, Shield, CreditCard, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
@@ -44,6 +45,20 @@ export default function CheckoutPage() {
   const isDiscountEligible = !!profile && !profile.has_used_signup_discount;
   const discountAmount = isDiscountEligible ? subtotal * 0.1 : 0;
   const total = subtotal - discountAmount + shippingCost;
+
+  // ── Meta Pixel: InitiateCheckout (fires once when the user lands here with items) ──
+  const hasTrackedCheckout = useRef(false);
+  useEffect(() => {
+    if (hasTrackedCheckout.current) return;
+    if (items.length === 0) return;
+    hasTrackedCheckout.current = true;
+
+    trackInitiateCheckout(
+      total,
+      items.map((i) => ({ id: i.product.id }))
+    );
+  }, [items, total]);
+  // ──────────────────────────────────────────────────────────────────────────────
 
   // Validation functions
   const validateFullName = (value: string) => {
@@ -91,13 +106,13 @@ export default function CheckoutPage() {
 
   const handleFieldChange = (field: keyof typeof shipping, value: string) => {
     let processedValue = value;
-    
+
     if (field === 'full_name' || field === 'city') {
       processedValue = value.replace(/[^a-zA-Z\s]/g, '');
       if (field === 'full_name') processedValue = processedValue.slice(0, 20);
       if (field === 'city') processedValue = processedValue.slice(0, 20);
     }
-    
+
     if (field === 'phone' || field === 'postal_code') {
       processedValue = value.replace(/\D/g, '');
       if (field === 'phone') processedValue = processedValue.slice(0, 8);
@@ -109,12 +124,12 @@ export default function CheckoutPage() {
     }
 
     setShipping(prev => ({ ...prev, [field]: processedValue }));
-    
+
     const error = validateField(field, processedValue);
     setFieldErrors(prev => ({ ...prev, [field]: error }));
   };
 
-  const hasChanges = 
+  const hasChanges =
     shipping.full_name !== originalShipping.full_name ||
     shipping.phone !== originalShipping.phone ||
     shipping.address_line1 !== originalShipping.address_line1 ||
@@ -123,13 +138,13 @@ export default function CheckoutPage() {
     shipping.postal_code !== originalShipping.postal_code ||
     shipping.country !== originalShipping.country;
 
-  const hasFormData = 
+  const hasFormData =
     shipping.full_name.trim() !== '' &&
     shipping.phone.trim() !== '' &&
     shipping.address_line1.trim() !== '' &&
     shipping.city.trim() !== '';
 
-  const isFormValid = 
+  const isFormValid =
     hasFormData &&
     !validateFullName(shipping.full_name) &&
     !validatePhone(shipping.phone) &&
@@ -275,34 +290,33 @@ export default function CheckoutPage() {
     if (!authUser) return;
     setSavingAddress(true);
 
-    // Validate all fields before saving
     const errors: Record<string, string> = {};
     let hasError = false;
-    
+
     const fullNameError = validateFullName(shipping.full_name);
     if (fullNameError) { errors.full_name = fullNameError; hasError = true; }
-    
+
     const phoneError = validatePhone(shipping.phone);
     if (phoneError) { errors.phone = phoneError; hasError = true; }
-    
+
     const addressError = validateAddressLine(shipping.address_line1, 'Address Line 1');
     if (addressError) { errors.address_line1 = addressError; hasError = true; }
-    
+
     const cityError = validateCity(shipping.city);
     if (cityError) { errors.city = cityError; hasError = true; }
-    
+
     const postalError = validatePostalCode(shipping.postal_code);
     if (postalError) { errors.postal_code = postalError; hasError = true; }
-    
+
     setFieldErrors(errors);
-    
+
     if (hasError) {
       setSavingAddress(false);
       return;
     }
 
     const success = await saveAddress(authUser.id, shipping, savedAddress?.id);
-    
+
     if (success) {
       setOriginalShipping({ ...shipping });
       setIsEditing(false);
@@ -310,7 +324,7 @@ export default function CheckoutPage() {
     } else {
       alert('Failed to save address. Please try again.');
     }
-    
+
     setSavingAddress(false);
   };
 
@@ -324,9 +338,9 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authUser) { 
-      navigate('/register'); 
-      return; 
+    if (!authUser) {
+      navigate('/register');
+      return;
     }
     setLoading(true);
 
@@ -473,6 +487,14 @@ export default function CheckoutPage() {
         }),
       });
 
+      // ── Meta Pixel: Purchase ─────────────────────────────
+      // Fire here, before clearing cart, with the REAL final total.
+      trackPurchase(
+        finalTotal,
+        items.map((i) => ({ id: i.product.id }))
+      );
+      // ─────────────────────────────────────────────────────
+
       clearCart();
       setShowConfirmation(true);
 
@@ -510,14 +532,14 @@ export default function CheckoutPage() {
             Order <span className="text-gold-400 font-medium">#{orderNumber}</span> · A confirmation email has been sent.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button 
-              onClick={() => navigate('/account/orders')} 
+            <button
+              onClick={() => navigate('/account/orders')}
               className="px-8 py-3 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-xl font-medium hover:shadow-lg hover:shadow-gold-400/30 transition-all duration-300 hover:scale-[1.02]"
             >
               Track Order
             </button>
-            <button 
-              onClick={() => navigate('/shop')} 
+            <button
+              onClick={() => navigate('/shop')}
               className="px-8 py-3 border border-white/10 text-white rounded-xl font-medium hover:bg-white/5 transition-all duration-300"
             >
               Continue Shopping
@@ -573,8 +595,8 @@ export default function CheckoutPage() {
                     <div>
                       <input
                         className={`w-full px-4 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200 ${
-                          fieldErrors.full_name 
-                            ? 'border-red-500/50 focus:ring-red-500/30' 
+                          fieldErrors.full_name
+                            ? 'border-red-500/50 focus:ring-red-500/30'
                             : 'border-white/10 focus:border-gold-400 focus:ring-gold-400/30 hover:border-white/20'
                         }`}
                         placeholder="Full Name * (max 20 chars, letters only)"
@@ -593,8 +615,8 @@ export default function CheckoutPage() {
                     <div>
                       <input
                         className={`w-full px-4 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200 ${
-                          fieldErrors.phone 
-                            ? 'border-red-500/50 focus:ring-red-500/30' 
+                          fieldErrors.phone
+                            ? 'border-red-500/50 focus:ring-red-500/30'
                             : 'border-white/10 focus:border-gold-400 focus:ring-gold-400/30 hover:border-white/20'
                         }`}
                         placeholder="Phone Number * (8 digits)"
@@ -614,8 +636,8 @@ export default function CheckoutPage() {
                     <div>
                       <input
                         className={`w-full px-4 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200 ${
-                          fieldErrors.address_line1 
-                            ? 'border-red-500/50 focus:ring-red-500/30' 
+                          fieldErrors.address_line1
+                            ? 'border-red-500/50 focus:ring-red-500/30'
                             : 'border-white/10 focus:border-gold-400 focus:ring-gold-400/30 hover:border-white/20'
                         }`}
                         placeholder="Address Line 1 * (max 30 chars)"
@@ -634,8 +656,8 @@ export default function CheckoutPage() {
                     <div>
                       <input
                         className={`w-full px-4 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200 ${
-                          fieldErrors.address_line2 
-                            ? 'border-red-500/50 focus:ring-red-500/30' 
+                          fieldErrors.address_line2
+                            ? 'border-red-500/50 focus:ring-red-500/30'
                             : 'border-white/10 focus:border-gold-400 focus:ring-gold-400/30 hover:border-white/20'
                         }`}
                         placeholder="Address Line 2 (max 30 chars, optional)"
@@ -654,8 +676,8 @@ export default function CheckoutPage() {
                     <div>
                       <input
                         className={`w-full px-4 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200 ${
-                          fieldErrors.city 
-                            ? 'border-red-500/50 focus:ring-red-500/30' 
+                          fieldErrors.city
+                            ? 'border-red-500/50 focus:ring-red-500/30'
                             : 'border-white/10 focus:border-gold-400 focus:ring-gold-400/30 hover:border-white/20'
                         }`}
                         placeholder="City * (max 20 chars, letters only)"
@@ -675,8 +697,8 @@ export default function CheckoutPage() {
                       <div>
                         <input
                           className={`w-full px-4 py-3 bg-neutral-800/50 border rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200 ${
-                            fieldErrors.postal_code 
-                              ? 'border-red-500/50 focus:ring-red-500/30' 
+                            fieldErrors.postal_code
+                              ? 'border-red-500/50 focus:ring-red-500/30'
                               : 'border-white/10 focus:border-gold-400 focus:ring-gold-400/30 hover:border-white/20'
                           }`}
                           placeholder="Postal Code (4 digits, optional)"
@@ -718,8 +740,8 @@ export default function CheckoutPage() {
                           onClick={handleSaveAddress}
                           disabled={savingAddress || !hasChanges}
                           className={`flex-1 py-3 px-4 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                            savingAddress || !hasChanges 
-                              ? 'opacity-50 cursor-not-allowed' 
+                            savingAddress || !hasChanges
+                              ? 'opacity-50 cursor-not-allowed'
                               : 'hover:shadow-lg hover:shadow-gold-400/30 hover:scale-[1.02]'
                           }`}
                         >
@@ -811,8 +833,8 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="w-full py-3.5 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-gold-400/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 disabled={loading || (!savedAddress && !isFormValid)}
               >
@@ -870,7 +892,7 @@ export default function CheckoutPage() {
               </div>
 
               <hr className="border-white/5 mb-4" />
-              
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Subtotal</span>
