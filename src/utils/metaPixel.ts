@@ -25,7 +25,11 @@ export const initMetaPixel = (): void => {
     t.async = true;
     t.src = v;
     const s = b.getElementsByTagName(e)[0];
-    s.parentNode?.insertBefore(t, s);
+if (s?.parentNode) {
+  s.parentNode.insertBefore(t, s);
+} else {
+  b.head.appendChild(t);
+}
   })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
   /* eslint-enable */
 
