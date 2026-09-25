@@ -38,6 +38,7 @@ export default function ProductPage() {
 
   const sizes: ProductSize[] = product?.sizes ?? [];
 
+  // ── Fetch product when slug changes ─────────────────────────
   useEffect(() => {
     if (!slug) {
       setLoading(false);
@@ -51,7 +52,6 @@ export default function ProductPage() {
 
         console.log('Fetching product with slug:', slug);
 
-        // Fetch the product with categories through the junction table
         const { data: productData, error: productError } = await supabase
           .from('products')
           .select(`
@@ -68,15 +68,6 @@ export default function ProductPage() {
           `)
           .eq('slug', slug)
           .maybeSingle();
-
-          useEffect(() => {
-  if (!product) return;
-  trackViewContent({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-  });
-}, [product?.id]);
 
         if (productError) {
           console.error('Product fetch error:', productError);
@@ -95,11 +86,9 @@ export default function ProductPage() {
         console.log('Product fetched successfully:', productData);
         setProduct(productData as Product);
 
-        // Set selected size if available
         const prodSizes: ProductSize[] = (productData as Product).sizes ?? [];
         setSelectedSize(prodSizes.length > 0 ? prodSizes[0] : null);
 
-        // Fetch related products
         if (productData.id) {
           await fetchRelatedProducts(productData.id);
         }
@@ -114,7 +103,6 @@ export default function ProductPage() {
 
     const fetchRelatedProducts = async (productId: string) => {
       try {
-        // First, get category IDs for this product
         const { data: categoryData, error: categoryError } = await supabase
           .from('product_categories')
           .select('category_id')
@@ -133,7 +121,6 @@ export default function ProductPage() {
           return;
         }
 
-        // Get product IDs from the same categories (excluding current product)
         const { data: productCategoryData, error: pcError } = await supabase
           .from('product_categories')
           .select('product_id')
@@ -155,7 +142,6 @@ export default function ProductPage() {
           return;
         }
 
-        // Fetch the related products with categories
         const { data: relatedData, error: relatedError } = await supabase
           .from('products')
           .select(`
@@ -189,17 +175,28 @@ export default function ProductPage() {
     fetchProduct();
   }, [slug]);
 
+  // ── Meta Pixel: ViewContent (fires when product is loaded / changes) ──
+  useEffect(() => {
+    if (!product) return;
+    trackViewContent({
+      id: product.id,
+      name: product.name,
+      price: product.sale_price ?? product.price,
+    });
+  }, [product?.id]);
+  // ─────────────────────────────────────────────────────────────────────
+
   const unitPrice = selectedSize
     ? selectedSize.price
     : product
     ? (product.sale_price ?? product.price)
     : 0;
   const displayPrice = unitPrice * quantity;
-  const images = product && product.image_urls 
-    ? product.image_urls.map(resolveImageUrl) 
+  const images = product && product.image_urls
+    ? product.image_urls.map(resolveImageUrl)
     : [];
   const hasDiscount = product?.sale_price !== null && product?.sale_price !== undefined;
-  const discountPercentage = hasDiscount && product?.price 
+  const discountPercentage = hasDiscount && product?.price
     ? Math.round(((product.price - product.sale_price!) / product.price) * 100)
     : 0;
 
@@ -294,7 +291,6 @@ export default function ProductPage() {
     </div>
   );
 
-  // Get categories array
   const categories = (product as any).categories;
   const categoryArray = Array.isArray(categories) ? categories : categories ? [categories] : [];
   const primaryCategory = categoryArray.length > 0 ? categoryArray[0] : null;
@@ -399,8 +395,8 @@ export default function ProductPage() {
                         setActiveImage(i);
                       }}
                       className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                        activeImage === i 
-                          ? 'w-6 bg-gold-400' 
+                        activeImage === i
+                          ? 'w-6 bg-gold-400'
                           : 'bg-white/30 hover:bg-white/50'
                       }`}
                     />
@@ -416,14 +412,14 @@ export default function ProductPage() {
                     key={i}
                     onClick={() => setActiveImage(i)}
                     className={`shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                      activeImage === i 
-                        ? 'border-gold-400 shadow-lg shadow-gold-400/20' 
+                      activeImage === i
+                        ? 'border-gold-400 shadow-lg shadow-gold-400/20'
                         : 'border-white/10 hover:border-white/30'
                     }`}
                   >
-                    <img 
-                      src={url} 
-                      alt="" 
+                    <img
+                      src={url}
+                      alt=""
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.currentTarget.src = '';
@@ -440,8 +436,8 @@ export default function ProductPage() {
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               {categoryArray.length > 0 ? (
                 categoryArray.slice(0, 2).map((cat: any, idx: number) => (
-                  <span 
-                    key={cat.id || idx} 
+                  <span
+                    key={cat.id || idx}
                     className="text-[10px] font-medium tracking-[0.2em] uppercase text-gold-400"
                   >
                     {cat.name}
@@ -454,7 +450,7 @@ export default function ProductPage() {
                 </span>
               )}
             </div>
-            
+
             <h1 className="font-serif text-2xl md:text-3xl font-light text-white mb-3 leading-tight">
               {product.name}
             </h1>
@@ -506,15 +502,15 @@ export default function ProductPage() {
                 <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/60 mb-2.5">Quantity</p>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center bg-white/5 rounded-xl border border-white/10">
-                    <button 
-                      onClick={() => setQuantity(q => Math.max(1, q - 1))} 
+                    <button
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
                       className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 rounded-l-xl transition-all duration-200"
                     >
                       <Minus size={14} />
                     </button>
                     <span className="w-12 text-center text-white font-medium text-sm">{quantity}</span>
-                    <button 
-                      onClick={() => setQuantity(q => Math.min(product.stock_quantity, q + 1))} 
+                    <button
+                      onClick={() => setQuantity(q => Math.min(product.stock_quantity, q + 1))}
                       className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 rounded-r-xl transition-all duration-200"
                     >
                       <Plus size={14} />
@@ -531,8 +527,8 @@ export default function ProductPage() {
                   onClick={handleAddToCart}
                   disabled={adding || product.stock_quantity === 0}
                   className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-medium tracking-widest uppercase rounded-xl transition-all duration-300 ${
-                    added 
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
+                    added
+                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
                       : 'bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 hover:shadow-lg hover:shadow-gold-400/30 hover:scale-[1.02]'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
@@ -544,8 +540,8 @@ export default function ProductPage() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => authUser ? toggleWishlist(product.id) : navigate('/login')}
                   className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all duration-300 ${
-                    inWishlist 
-                      ? 'border-gold-400 bg-gold-400/10 text-gold-400 shadow-lg shadow-gold-400/20' 
+                    inWishlist
+                      ? 'border-gold-400 bg-gold-400/10 text-gold-400 shadow-lg shadow-gold-400/20'
                       : 'border-white/10 text-white/60 hover:border-white/30 hover:bg-white/5'
                   }`}
                 >
