@@ -353,7 +353,7 @@ export default function HomePage() {
                   <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">1</div>
-                      <span className="text-neutral-800 font-medium">Buy 1 Perfume for</span>
+                      <span className="text-neutral-800 font-medium">Buy 1 Perfume (100ml) for</span>
                     </div>
                     <span className="text-xl font-bold text-gold-500">$15</span>
                   </div>
@@ -361,7 +361,7 @@ export default function HomePage() {
                   <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">2</div>
-                      <span className="text-neutral-800 font-medium">Buy 2 Perfumes for</span>
+                      <span className="text-neutral-800 font-medium">Buy 2 Perfumes (100ml) for</span>
                     </div>
                     <span className="text-xl font-bold text-gold-500">$25</span>
                   </div>
@@ -369,7 +369,7 @@ export default function HomePage() {
                   <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">3</div>
-                      <span className="text-neutral-800 font-medium">Buy 3 Perfumes for</span>
+                      <span className="text-neutral-800 font-medium">Buy 3 Perfumes (100ml) for</span>
                     </div>
                     <span className="text-xl font-bold text-gold-500">$35</span>
                   </div>

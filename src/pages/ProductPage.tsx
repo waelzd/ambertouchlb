@@ -186,12 +186,46 @@ export default function ProductPage() {
   }, [product?.id]);
   // ─────────────────────────────────────────────────────────────────────
 
-  const unitPrice = selectedSize
+  // ── Custom price calculation with 100ml bundle pricing ──────
+  const calculateUnitPrice = (): number => {
+    if (!product) return 0;
+
+    const basePrice = selectedSize
+      ? selectedSize.price
+      : (product.sale_price ?? product.price);
+
+    // Special bundle pricing ONLY for the 100ml size
+    if (selectedSize && selectedSize.label.toLowerCase().includes('100ml')) {
+      if (quantity === 1) return 15;
+      if (quantity === 2) return 25 / 2; // 12.50 each => total 25
+      if (quantity === 3) return 35 / 3; // ≈11.67 each => total 35
+      // For 4+: use the 3-for-$35 deal plus $15 for each extra unit
+      const extraUnits = quantity - 3;
+      return (35 + extraUnits * 15) / quantity;
+    }
+
+    return basePrice;
+  };
+
+  const unitPrice = calculateUnitPrice();
+  const displayPrice = selectedSize
+    ? (selectedSize.label.toLowerCase().includes('100ml')
+        ? // For 100ml, compute total directly using bundle logic
+          quantity === 1 ? 15
+          : quantity === 2 ? 25
+          : quantity === 3 ? 35
+          : 35 + (quantity - 3) * 15
+        : unitPrice * quantity)
+    : unitPrice * quantity;
+
+  const baseUnitPrice = selectedSize
     ? selectedSize.price
-    : product
-    ? (product.sale_price ?? product.price)
-    : 0;
-  const displayPrice = unitPrice * quantity;
+    : (product?.sale_price ?? product?.price ?? 0);
+  const originalPrice = baseUnitPrice * quantity;
+  const hasBundleDiscount =
+    selectedSize?.label.toLowerCase().includes('100ml') && displayPrice < originalPrice;
+  // ─────────────────────────────────────────────────────────────
+
   const images = product && product.image_urls
     ? product.image_urls.map(resolveImageUrl)
     : [];
@@ -455,18 +489,28 @@ export default function ProductPage() {
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6 flex-wrap">
               <span className={`text-2xl font-bold ${
-                hasDiscount ? 'text-gold-400' : 'text-white'
+                hasDiscount || hasBundleDiscount ? 'text-gold-400' : 'text-white'
               }`}>
                 ${displayPrice.toFixed(2)}
               </span>
-              {hasDiscount && !selectedSize && (
+              {hasBundleDiscount && (
+                <span className="text-base text-white/40 line-through">
+                  ${originalPrice.toFixed(2)}
+                </span>
+              )}
+              {!hasBundleDiscount && hasDiscount && !selectedSize && (
                 <span className="text-base text-white/40 line-through">
                   ${(product.price * quantity).toFixed(2)}
                 </span>
               )}
-              {hasDiscount && !selectedSize && (
+              {hasBundleDiscount && (
+                <span className="px-2.5 py-0.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] font-medium rounded-full">
+                  Save ${(originalPrice - displayPrice).toFixed(2)}
+                </span>
+              )}
+              {!hasBundleDiscount && hasDiscount && !selectedSize && (
                 <span className="px-2.5 py-0.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] font-medium rounded-full">
                   Save ${((product.price - product.sale_price!) * quantity).toFixed(2)}
                 </span>
@@ -483,7 +527,10 @@ export default function ProductPage() {
                     {sizes.map((s) => (
                       <button
                         key={s.label}
-                        onClick={() => setSelectedSize(s)}
+                        onClick={() => {
+                          setSelectedSize(s);
+                          setQuantity(1); // reset quantity when switching sizes
+                        }}
                         className={`py-3 px-4 text-sm font-medium rounded-xl border transition-all duration-300 flex items-center justify-between ${
                           selectedSize?.label === s.label
                             ? 'bg-gold-400 text-neutral-900 border-gold-400 shadow-lg shadow-gold-400/20'
@@ -520,6 +567,13 @@ export default function ProductPage() {
                     {product.stock_quantity} in stock
                   </p>
                 </div>
+
+                {/* Bundle hint for 100ml */}
+                {selectedSize?.label.toLowerCase().includes('100ml') && (
+                  <p className="text-[10px] text-gold-400/70 mt-2">
+                    💡 Bundle deal: 2 for $25 · 3 for $35
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-2.5 pt-2">
