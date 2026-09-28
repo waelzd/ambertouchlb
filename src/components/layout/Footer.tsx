@@ -136,8 +136,19 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-neutral-800 py-6 px-4">
         <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
-          <p>&copy; {new Date().getFullYear()} AmberTouch. All rights reserved.</p>
-          <div className="flex gap-6">
+          {/* Left: copyright */}
+          <p className="order-1 md:order-none text-center md:text-left">
+            &copy; {new Date().getFullYear()} AmberTouch. All rights reserved.
+          </p>
+
+          {/* Center: developer credit */}
+          <p className="order-3 md:order-none text-center text-neutral-500">
+            Developed By{' '}
+            <span className="text-gold-400 font-medium">Wael Zeineddine</span>
+          </p>
+
+          {/* Right: legal links */}
+          <div className="order-2 md:order-none flex gap-6">
             <a href="/privacy-policy" className="hover:text-gold-400 transition-colors">Privacy Policy</a>
             <a href="/terms-of-service" className="hover:text-gold-400 transition-colors">Terms of Service</a>
           </div>
