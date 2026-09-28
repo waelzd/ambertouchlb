@@ -187,6 +187,10 @@ export default function ProductPage() {
   // ─────────────────────────────────────────────────────────────────────
 
   // ── Custom price calculation with 100ml bundle pricing ──────
+  // Bundle ONLY applies for qty 1, 2, 3. Once qty >= 4, normal price applies.
+  const is100ml = selectedSize?.label.toLowerCase().includes('100ml') ?? false;
+  const isBundleActive = is100ml && quantity >= 1 && quantity <= 3;
+
   const calculateUnitPrice = (): number => {
     if (!product) return 0;
 
@@ -194,36 +198,29 @@ export default function ProductPage() {
       ? selectedSize.price
       : (product.sale_price ?? product.price);
 
-    // Special bundle pricing ONLY for the 100ml size
-    if (selectedSize && selectedSize.label.toLowerCase().includes('100ml')) {
+    // Special bundle pricing ONLY for the 100ml size AND qty 1-3
+    if (isBundleActive) {
       if (quantity === 1) return 15;
       if (quantity === 2) return 25 / 2; // 12.50 each => total 25
       if (quantity === 3) return 35 / 3; // ≈11.67 each => total 35
-      // For 4+: use the 3-for-$35 deal plus $15 for each extra unit
-      const extraUnits = quantity - 3;
-      return (35 + extraUnits * 15) / quantity;
     }
 
+    // Default: normal size price per unit
     return basePrice;
   };
 
   const unitPrice = calculateUnitPrice();
-  const displayPrice = selectedSize
-    ? (selectedSize.label.toLowerCase().includes('100ml')
-        ? // For 100ml, compute total directly using bundle logic
-          quantity === 1 ? 15
-          : quantity === 2 ? 25
-          : quantity === 3 ? 35
-          : 35 + (quantity - 3) * 15
-        : unitPrice * quantity)
-    : unitPrice * quantity;
 
   const baseUnitPrice = selectedSize
     ? selectedSize.price
     : (product?.sale_price ?? product?.price ?? 0);
+
+  const displayPrice = isBundleActive
+    ? (quantity === 1 ? 15 : quantity === 2 ? 25 : 35)
+    : unitPrice * quantity;
+
   const originalPrice = baseUnitPrice * quantity;
-  const hasBundleDiscount =
-    selectedSize?.label.toLowerCase().includes('100ml') && displayPrice < originalPrice;
+  const hasBundleDiscount = isBundleActive && displayPrice < originalPrice;
   // ─────────────────────────────────────────────────────────────
 
   const images = product && product.image_urls
@@ -569,9 +566,11 @@ export default function ProductPage() {
                 </div>
 
                 {/* Bundle hint for 100ml */}
-                {selectedSize?.label.toLowerCase().includes('100ml') && (
+                {is100ml && (
                   <p className="text-[10px] text-gold-400/70 mt-2">
-                    💡 Bundle deal: 2 for $25 · 3 for $35
+                    {quantity <= 3
+                      ? `💡 Bundle deal active: ${quantity === 1 ? '1 for $15' : quantity === 2 ? '2 for $25' : '3 for $35'}`
+                      : `💡 Bundle deal applies for 1–3 only. Qty ${quantity} = $${(baseUnitPrice * quantity).toFixed(2)}`}
                   </p>
                 )}
               </div>
