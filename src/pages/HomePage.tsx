@@ -347,9 +347,6 @@ export default function HomePage() {
                 <h3 className="text-2xl font-serif font-light text-neutral-900 mb-2">
                   Build Your Rotation
                 </h3>
-                <p className="text-xs text-gold-400 font-medium tracking-[0.2em] uppercase mb-6">
-                  Exclusive First Order Offer
-                </p>
                 
                 {/* Pricing Tiers */}
                 <div className="space-y-3 mb-6">
@@ -397,12 +394,12 @@ export default function HomePage() {
                   >
                     Browse Collection
                   </Link>
-                  <button
+                  {/* <button
                     onClick={handleClosePopup}
                     className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
                   >
                     No thanks, continue shopping
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
