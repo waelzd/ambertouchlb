@@ -75,6 +75,27 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   }
 }
 
+// ── Bundle pricing helper ─────────────────────────────────────
+// Applies the 100ml bundle deal:
+//   qty 1 → $15
+//   qty 2 → $25
+//   qty 3 → $35
+// For qty 4+ the offer is removed and normal price × qty applies.
+function getLineTotal(item: CartLineItem): number {
+  const is100ml = item.size?.toLowerCase().includes('100ml') ?? false;
+
+  if (is100ml) {
+    if (item.quantity === 1) return 15;
+    if (item.quantity === 2) return 25;
+    if (item.quantity === 3) return 35;
+    // qty 4+ → normal price × qty (bundle removed)
+    return item.price * item.quantity;
+  }
+
+  return item.price * item.quantity;
+}
+// ──────────────────────────────────────────────────────────────
+
 type CartContextType = CartState & {
   dispatch: React.Dispatch<CartAction>;
   totalItems: number;
@@ -105,7 +126,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [state.items]);
 
   const totalItems = state.items.reduce((sum, i) => sum + i.quantity, 0);
-  const subtotal = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  // ── Subtotal now uses bundle-aware line totals ───────────────
+  const subtotal = state.items.reduce((sum, i) => sum + getLineTotal(i), 0);
+  // ─────────────────────────────────────────────────────────────
 
   const createOrder = async (userId: string, shippingAddress: any) => {
     try {
@@ -122,12 +146,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (orderError) throw orderError;
 
-      const orderItems = state.items.map((item) => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.price,
-      }));
+      // ── Save order items with bundle-aware line prices ───────
+      const orderItems = state.items.map((item) => {
+        const lineTotal = getLineTotal(item);
+        // Per-unit price reflecting the deal (so lineTotal = unitPrice * qty)
+        const effectiveUnitPrice = item.quantity > 0 ? lineTotal / item.quantity : item.price;
+        return {
+          order_id: order.id,
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: effectiveUnitPrice,
+        };
+      });
+      // ─────────────────────────────────────────────────────────
 
       const { error: itemsError } = await supabase
         .from('order_items')
