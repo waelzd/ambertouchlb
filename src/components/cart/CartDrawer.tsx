@@ -179,7 +179,7 @@ export default function CartDrawer() {
                             </button>
                             <span className="text-neutral-700">|</span>
                             <Link
-                              to={`/product/${item.product.name}`}
+                              to={`/product/${item.product.slug}`}
                               onClick={() => dispatch({ type: 'CLOSE_CART' })}
                               className="text-xs text-neutral-500 hover:text-gold-400 transition-colors"
                             >

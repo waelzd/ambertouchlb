@@ -29,6 +29,9 @@ type CartAction =
 
 const CART_KEY = 'ml_cart';
 
+// Base 100ml price when the bundle offer does NOT apply (qty >= 4)
+const BASE_100ML_PRICE = 15;
+
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_ITEM': {
@@ -80,7 +83,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 //   qty 1 → $15
 //   qty 2 → $25
 //   qty 3 → $35
-// For qty 4+ the offer is removed and normal price × qty applies.
+// For qty 4+ the offer is removed and the BASE 100ml price ($15)
+// is used per unit → 4 × $15 = $60, 5 × $15 = $75, etc.
 function getLineTotal(item: CartLineItem): number {
   const is100ml = item.size?.toLowerCase().includes('100ml') ?? false;
 
@@ -88,8 +92,8 @@ function getLineTotal(item: CartLineItem): number {
     if (item.quantity === 1) return 15;
     if (item.quantity === 2) return 25;
     if (item.quantity === 3) return 35;
-    // qty 4+ → normal price × qty (bundle removed)
-    return item.price * item.quantity;
+    // qty 4+ → bundle removed, use BASE 100ml price × qty
+    return BASE_100ML_PRICE * item.quantity;
   }
 
   return item.price * item.quantity;
@@ -167,8 +171,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (itemsError) throw itemsError;
 
       // ── Meta Pixel: Purchase ──────────────────────────────────
-      // Fire only after the order is confirmed in Supabase,
-      // and BEFORE we clear the cart (we need the items).
       trackPurchase(
         subtotal,
         state.items.map((i) => ({ id: i.product.id }))
@@ -193,12 +195,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addItem: (product, color, size, price, quantity = 1) => {
         dispatch({ type: 'ADD_ITEM', product, color, size, price, quantity });
 
-        // ── Meta Pixel: AddToCart ───────────────────────────────
         trackAddToCart(
           { id: product.id, name: product.name, price },
           quantity
         );
-        // ────────────────────────────────────────────────────────
       },
       removeItem: (id) => dispatch({ type: 'REMOVE_ITEM', id }),
       updateQty: (id, quantity) => dispatch({ type: 'UPDATE_QTY', id, quantity }),
