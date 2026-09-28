@@ -316,7 +316,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-neutral-950">
       {/* Popup Modal - Build Your Rotation Offer */}
       {showPopup && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-8">
           <div 
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={handleClosePopup}
@@ -338,8 +338,8 @@ export default function HomePage() {
               <X size={24} />
             </button>
 
-            <div className="text-center mt-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-100 rounded-full mb-6">
+            <div className="text-center mt-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-100 rounded-full mb-5">
                 <Gift size={32} className="text-gold-400" />
               </div>
               
@@ -355,18 +355,15 @@ export default function HomePage() {
                 <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">1</div>
-                    <span className="text-neutral-800 font-medium">Perfume</span>
+                    <span className="text-neutral-800 font-medium">Buy 1 Perfume for</span>
                   </div>
                   <span className="text-xl font-bold text-gold-500">$15</span>
                 </div>
 
-                <div className="flex items-center justify-between bg-gold-50 border border-gold-200 rounded-xl px-5 py-4 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-gold-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
-                    Popular
-                  </div>
+                <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-gold-600 font-bold text-sm">2</div>
-                    <span className="text-neutral-800 font-medium">Perfumes</span>
+                    <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">2</div>
+                    <span className="text-neutral-800 font-medium">Buy 2 Perfumes for</span>
                   </div>
                   <span className="text-xl font-bold text-gold-500">$25</span>
                 </div>
@@ -374,7 +371,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">3</div>
-                    <span className="text-neutral-800 font-medium">Perfumes</span>
+                    <span className="text-neutral-800 font-medium">Buy 3 Perfumes for</span>
                   </div>
                   <span className="text-xl font-bold text-gold-500">$35</span>
                 </div>
