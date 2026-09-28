@@ -314,7 +314,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      {/* Popup Modal - Shows on every refresh for eligible users */}
+      {/* Popup Modal - Build Your Rotation Offer */}
       {showPopup && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
           <div 
@@ -333,7 +333,7 @@ export default function HomePage() {
             
             <button
               onClick={handleClosePopup}
-              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-900 transition-colors"
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-900 transition-colors z-10"
             >
               <X size={24} />
             </button>
@@ -343,22 +343,46 @@ export default function HomePage() {
                 <Gift size={32} className="text-gold-400" />
               </div>
               
-              <h3 className="text-2xl font-serif font-light text-neutral-900 mb-3">
-                Welcome to AmberTouch!
+              <h3 className="text-2xl font-serif font-light text-neutral-900 mb-2">
+                Build Your Rotation
               </h3>
+              <p className="text-xs text-gold-400 font-medium tracking-[0.2em] uppercase mb-6">
+                Exclusive First Order Offer
+              </p>
               
-              <div className="mb-6">
-                <div className="inline-block bg-gold-50 px-4 py-2 rounded-full mb-4">
-                  <span className="text-3xl font-bold text-gold-400">10% OFF</span>
+              {/* Pricing Tiers */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">1</div>
+                    <span className="text-neutral-800 font-medium">Perfume</span>
+                  </div>
+                  <span className="text-xl font-bold text-gold-500">$15</span>
                 </div>
-                <p className="text-neutral-600 text-sm leading-relaxed">
-                  Get <span className="font-semibold text-gold-400">10% discount</span> on any perfume 
-                  you choose in your first order!
-                </p>
-                <p className="text-neutral-500 text-xs mt-2">
-                  ✨ Just sign in to our website and order now!
-                </p>
+
+                <div className="flex items-center justify-between bg-gold-50 border border-gold-200 rounded-xl px-5 py-4 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-gold-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">
+                    Popular
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-gold-600 font-bold text-sm">2</div>
+                    <span className="text-neutral-800 font-medium">Perfumes</span>
+                  </div>
+                  <span className="text-xl font-bold text-gold-500">$25</span>
+                </div>
+
+                <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">3</div>
+                    <span className="text-neutral-800 font-medium">Perfumes</span>
+                  </div>
+                  <span className="text-xl font-bold text-gold-500">$35</span>
+                </div>
               </div>
+
+              <p className="text-neutral-500 text-xs mb-6">
+                ✨ Sign in to unlock these exclusive prices on your first order!
+              </p>
 
               <div className="space-y-3">
                 <Link
@@ -366,7 +390,7 @@ export default function HomePage() {
                   onClick={handleSignUp}
                   className="block w-full py-3.5 bg-gold-400 text-neutral-900 rounded-lg font-medium hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                 >
-                  Sign Up & Get Discount
+                  Sign Up & Shop Offer
                 </Link>
                 <Link
                   to="/shop"
