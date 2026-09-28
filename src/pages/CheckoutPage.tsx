@@ -7,6 +7,29 @@ import { CheckCircle, Edit2, MapPin, Truck, Shield, CreditCard, ArrowRight } fro
 import { motion } from 'framer-motion';
 import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
 
+// Base 100ml price when bundle offer does NOT apply (qty >= 4)
+const BASE_100ML_PRICE = 15;
+
+// ── Bundle-aware line total (mirrors CartContext / CartDrawer) ──
+function getLineTotal(item: {
+  size?: string;
+  price: number;
+  quantity: number;
+}): number {
+  const is100ml = item.size?.toLowerCase().includes('100ml') ?? false;
+
+  if (is100ml) {
+    if (item.quantity === 1) return 15;
+    if (item.quantity === 2) return 25;
+    if (item.quantity === 3) return 35;
+    // qty 4+ → bundle removed, base 100ml price × qty
+    return BASE_100ML_PRICE * item.quantity;
+  }
+
+  return item.price * item.quantity;
+}
+// ──────────────────────────────────────────────────────────────
+
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
   const { authUser, profile, refreshProfile } = useAuth();
@@ -394,13 +417,23 @@ export default function CheckoutPage() {
 
       if (orderError) throw orderError;
 
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.price,
-        size: item.size || null,
-      }));
+      // ── Save order items with bundle-aware per-unit prices ──
+      const orderItems = items.map(item => {
+        const lineTotal = getLineTotal({
+          size: item.size,
+          price: item.price,
+          quantity: item.quantity,
+        });
+        const effectiveUnitPrice = item.quantity > 0 ? lineTotal / item.quantity : item.price;
+        return {
+          order_id: order.id,
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: effectiveUnitPrice,
+          size: item.size || null,
+        };
+      });
+      // ─────────────────────────────────────────────────────────
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -450,20 +483,29 @@ export default function CheckoutPage() {
       const orderRef = order.order_number;
       setOrderNumber(orderRef);
 
+      // ── Email items HTML using bundle-aware line totals ──
       const itemsHtml = items
         .map(
-          item => `
-            <tr>
-              <td style="padding:8px;border-bottom:1px solid #eee">
-                ${item.product.name}${item.size ? ` (${item.size})` : ''}
-              </td>
-              <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">×${item.quantity}</td>
-              <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">
-                $${(item.price * item.quantity).toFixed(2)}
-              </td>
-            </tr>`
+          item => {
+            const lineTotal = getLineTotal({
+              size: item.size,
+              price: item.price,
+              quantity: item.quantity,
+            });
+            return `
+              <tr>
+                <td style="padding:8px;border-bottom:1px solid #eee">
+                  ${item.product.name}${item.size ? ` (${item.size})` : ''}
+                </td>
+                <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">×${item.quantity}</td>
+                <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">
+                  $${lineTotal.toFixed(2)}
+                </td>
+              </tr>`;
+          }
         )
         .join('');
+      // ────────────────────────────────────────────────────
 
       const { data: adminUser } = await supabase
         .from('users')
@@ -488,7 +530,6 @@ export default function CheckoutPage() {
       });
 
       // ── Meta Pixel: Purchase ─────────────────────────────
-      // Fire here, before clearing cart, with the REAL final total.
       trackPurchase(
         finalTotal,
         items.map((i) => ({ id: i.product.id }))
@@ -868,27 +909,42 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {items.map(item => (
-                  <div key={item.id} className="flex gap-3 bg-white/5 rounded-lg p-3 border border-white/5">
-                    <div className="w-14 h-16 bg-neutral-800 rounded-lg overflow-hidden shrink-0">
-                      <img src={item.product.image_urls?.[0] || ''} alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white line-clamp-1">{item.product.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-neutral-500">×{item.quantity}</span>
-                        {item.size && (
-                          <span className="text-xs text-gold-400 font-medium bg-gold-400/10 px-2 py-0.5 rounded border border-gold-400/20">
-                            {item.size}
-                          </span>
-                        )}
+                {items.map(item => {
+                  // ── Bundle-aware line total ──
+                  const lineTotal = getLineTotal({
+                    size: item.size,
+                    price: item.price,
+                    quantity: item.quantity,
+                  });
+                  const is100ml = item.size?.toLowerCase().includes('100ml') ?? false;
+                  const bundleActive = is100ml && item.quantity <= 3;
+                  // ─────────────────────────────
+
+                  return (
+                    <div key={item.id} className="flex gap-3 bg-white/5 rounded-lg p-3 border border-white/5">
+                      <div className="w-14 h-16 bg-neutral-800 rounded-lg overflow-hidden shrink-0">
+                        <img src={item.product.image_urls?.[0] || ''} alt="" className="w-full h-full object-cover" />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white line-clamp-1">{item.product.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-neutral-500">×{item.quantity}</span>
+                          {item.size && (
+                            <span className="text-xs text-gold-400 font-medium bg-gold-400/10 px-2 py-0.5 rounded border border-gold-400/20">
+                              {item.size}
+                            </span>
+                          )}
+                          {bundleActive && item.quantity > 1 && (
+                            <span className="text-[10px] text-gold-400/70">Bundle deal</span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium text-gold-400 shrink-0">
+                        ${lineTotal.toFixed(2)}
+                      </p>
                     </div>
-                    <p className="text-sm font-medium text-gold-400 shrink-0">
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <hr className="border-white/5 mb-4" />

@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 
+// Base 100ml price when bundle offer does NOT apply (qty >= 4)
+const BASE_100ML_PRICE = 15;
+
 export default function CartDrawer() {
   const { items, isOpen, dispatch, removeItem, updateQty, subtotal, totalItems } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -16,20 +19,19 @@ export default function CartDrawer() {
 
   // ── Helper: compute the correct price for a cart line item ──
   // Applies the 100ml bundle deal for qty 1, 2, 3 only.
-  // For qty >= 4, reverts to normal size price × qty.
+  // For qty >= 4, reverts to the BASE 100ml price ($15) × qty.
   const getLineTotal = (item: any): number => {
     const is100ml = item.size?.toLowerCase().includes('100ml');
-    const baseUnitPrice = item.price; // stored unit price from cart context
 
     if (is100ml) {
       if (item.quantity === 1) return 15;
       if (item.quantity === 2) return 25;
       if (item.quantity === 3) return 35;
-      // qty 4+ → normal price × qty (bundle removed)
-      return baseUnitPrice * item.quantity;
+      // qty 4+ → bundle removed, base 100ml price × qty
+      return BASE_100ML_PRICE * item.quantity;
     }
 
-    return baseUnitPrice * item.quantity;
+    return item.price * item.quantity;
   };
   // ─────────────────────────────────────────────────────────────
 
