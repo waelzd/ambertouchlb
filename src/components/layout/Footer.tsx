@@ -144,7 +144,7 @@ export default function Footer() {
           {/* Center: developer credit */}
           <p className="order-3 md:order-none text-center text-neutral-500">
             Developed By{' '}
-            <span className="text-gold-400 font-medium">Wael Zeineddine</span>
+            <span className="text-neutral-500 font-medium">Wael Zeineddine</span>
           </p>
 
           {/* Right: legal links */}
