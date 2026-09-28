@@ -327,9 +327,9 @@ export default function HomePage() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl overflow-hidden"
+            className="relative bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
           >
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gold-400" />
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gold-400 shrink-0" />
             
             <button
               onClick={handleClosePopup}
@@ -338,75 +338,73 @@ export default function HomePage() {
               <X size={24} />
             </button>
 
-            <div className="text-center mt-2">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-100 rounded-full mb-5">
-                <Gift size={32} className="text-gold-400" />
-              </div>
-              
-              <h3 className="text-2xl font-serif font-light text-neutral-900 mb-2">
-                Build Your Rotation
-              </h3>
-              <p className="text-xs text-gold-400 font-medium tracking-[0.2em] uppercase mb-6">
-                Exclusive First Order Offer
-              </p>
-              
-              {/* Pricing Tiers */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">1</div>
-                    <span className="text-neutral-800 font-medium">Buy 1 Perfume for</span>
+            <div className="overflow-y-auto p-8 pt-12 pb-10">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-100 rounded-full mb-5">
+                  <Gift size={32} className="text-gold-400" />
+                </div>
+                
+                <h3 className="text-2xl font-serif font-light text-neutral-900 mb-2">
+                  Build Your Rotation
+                </h3>
+                <p className="text-xs text-gold-400 font-medium tracking-[0.2em] uppercase mb-6">
+                  Exclusive First Order Offer
+                </p>
+                
+                {/* Pricing Tiers */}
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">1</div>
+                      <span className="text-neutral-800 font-medium">Buy 1 Perfume for</span>
+                    </div>
+                    <span className="text-xl font-bold text-gold-500">$15</span>
                   </div>
-                  <span className="text-xl font-bold text-gold-500">$15</span>
+
+                  <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">2</div>
+                      <span className="text-neutral-800 font-medium">Buy 2 Perfumes for</span>
+                    </div>
+                    <span className="text-xl font-bold text-gold-500">$25</span>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">3</div>
+                      <span className="text-neutral-800 font-medium">Buy 3 Perfumes for</span>
+                    </div>
+                    <span className="text-xl font-bold text-gold-500">$35</span>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">2</div>
-                    <span className="text-neutral-800 font-medium">Buy 2 Perfumes for</span>
-                  </div>
-                  <span className="text-xl font-bold text-gold-500">$25</span>
-                </div>
+                <p className="text-neutral-500 text-xs mb-6">
+                  ✨ Sign in to unlock these exclusive prices on your first order!
+                </p>
 
-                <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-4 hover:border-gold-400/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center text-gold-500 font-bold text-sm">3</div>
-                    <span className="text-neutral-800 font-medium">Buy 3 Perfumes for</span>
-                  </div>
-                  <span className="text-xl font-bold text-gold-500">$35</span>
+                <div className="space-y-3">
+                  <Link
+                    to="/register"
+                    onClick={handleSignUp}
+                    className="block w-full py-3.5 bg-gold-400 text-neutral-900 rounded-lg font-medium hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                  >
+                    Sign Up & Shop Offer
+                  </Link>
+                  <Link
+                    to="/shop"
+                    onClick={handleClosePopup}
+                    className="block w-full py-3.5 bg-neutral-950 text-gold-400 rounded-lg font-medium border border-neutral-800 hover:bg-neutral-900 hover:text-gold-400 hover:scale-[1.02] transition-all duration-300"
+                  >
+                    Browse Collection
+                  </Link>
+                  <button
+                    onClick={handleClosePopup}
+                    className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+                  >
+                    No thanks, continue shopping
+                  </button>
                 </div>
               </div>
-
-              <p className="text-neutral-500 text-xs mb-6">
-                ✨ Sign in to unlock these exclusive prices on your first order!
-              </p>
-
-              <div className="space-y-3">
-                <Link
-                  to="/register"
-                  onClick={handleSignUp}
-                  className="block w-full py-3.5 bg-gold-400 text-neutral-900 rounded-lg font-medium hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-                >
-                  Sign Up & Shop Offer
-                </Link>
-                <Link
-                  to="/shop"
-                  onClick={handleClosePopup}
-                  className="block w-full py-3.5 bg-neutral-950 text-gold-400 rounded-lg font-medium border border-neutral-800 hover:bg-neutral-900 hover:text-gold-400 hover:scale-[1.02] transition-all duration-300"
-                >
-                  Browse Collection
-                </Link>
-                <button
-                  onClick={handleClosePopup}
-                  className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
-                >
-                  No thanks, continue shopping
-                </button>
-              </div>
-
-              <p className="text-[10px] text-neutral-400 mt-4">
-                *Offer valid for first-time customers only
-              </p>
             </div>
           </motion.div>
         </div>
