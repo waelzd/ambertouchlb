@@ -7,6 +7,13 @@ import { useWishlist } from '../../context/WishlistContext';
 // Base 100ml price when bundle offer does NOT apply (qty >= 4)
 const BASE_100ML_PRICE = 15;
 
+// Bundle tiers for 100ml (applied across ALL 100ml items combined)
+const BUNDLE_TIERS: Record<number, number> = {
+  1: 15,
+  2: 25,
+  3: 35,
+};
+
 export default function CartDrawer() {
   const { items, isOpen, dispatch, removeItem, updateQty, subtotal, totalItems } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -17,22 +24,41 @@ export default function CartDrawer() {
     await toggleWishlist(productId);
   };
 
-  // ── Helper: compute the correct price for a cart line item ──
-  // Applies the 100ml bundle deal for qty 1, 2, 3 only.
-  // For qty >= 4, reverts to the BASE 100ml price ($15) × qty.
-  const getLineTotal = (item: any): number => {
-    const is100ml = item.size?.toLowerCase().includes('100ml');
+  // ── Pricing helpers ─────────────────────────────────────────
+  const is100mlItem = (item: any) =>
+    item.size?.toLowerCase().includes('100ml');
 
-    if (is100ml) {
-      if (item.quantity === 1) return 15;
-      if (item.quantity === 2) return 25;
-      if (item.quantity === 3) return 35;
-      // qty 4+ → bundle removed, base 100ml price × qty
-      return BASE_100ML_PRICE * item.quantity;
+  // Price for ONE 100ml unit given the TOTAL 100ml qty in cart
+  // (applies bundle tiers across all 100ml items combined)
+  const get100mlUnitPrice = (total100mlQty: number): number => {
+    if (total100mlQty >= 1 && total100mlQty <= 3) {
+      return BUNDLE_TIERS[total100mlQty] / total100mlQty;
     }
+    return BASE_100ML_PRICE;
+  };
 
+  // Total 100ml quantity across the whole cart
+  const total100mlQty = items.reduce(
+    (sum, item) => (is100mlItem(item) ? sum + item.quantity : sum),
+    0
+  );
+
+  const bundleActive = total100mlQty >= 1 && total100mlQty <= 3;
+  const effective100mlUnitPrice = get100mlUnitPrice(total100mlQty);
+
+  // Per-line total (100ml lines use the shared unit price)
+  const getLineTotal = (item: any): number => {
+    if (is100mlItem(item)) {
+      return effective100mlUnitPrice * item.quantity;
+    }
     return item.price * item.quantity;
   };
+
+  // Compute the discounted subtotal ourselves so the footer matches the line totals
+  const computedSubtotal = items.reduce(
+    (sum, item) => sum + getLineTotal(item),
+    0
+  );
   // ─────────────────────────────────────────────────────────────
 
   return (
@@ -66,8 +92,8 @@ export default function CartDrawer() {
                 </div>
                 <span className="font-serif text-xl font-light text-gold-400">Your Cart</span>
               </div>
-              <button 
-                onClick={() => dispatch({ type: 'CLOSE_CART' })} 
+              <button
+                onClick={() => dispatch({ type: 'CLOSE_CART' })}
                 className="p-2 rounded-full hover:bg-neutral-800 transition-colors text-neutral-500 hover:text-gold-400"
               >
                 <X size={20} />
@@ -85,8 +111,8 @@ export default function CartDrawer() {
                   <p className="text-sm text-neutral-500 max-w-xs">
                     Looks like you haven't added anything to your cart yet. Start exploring our collection!
                   </p>
-                  <Link 
-                    to="/shop" 
+                  <Link
+                    to="/shop"
                     onClick={() => dispatch({ type: 'CLOSE_CART' })}
                     className="bg-gold-400 text-neutral-900 hover:bg-gold-500 px-6 py-3 rounded-xl font-medium transition-all inline-block"
                   >
@@ -95,10 +121,16 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 <>
+                  {/* Bundle banner — shows the shared deal status */}
+                  {bundleActive && total100mlQty > 1 && (
+                    <div className="rounded-xl border border-gold-400/30 bg-gold-400/5 px-4 py-3 text-xs text-gold-400">
+                      🎉 Bundle deal applied across {total100mlQty} × 100ml items — you're saving!
+                    </div>
+                  )}
+
                   {items.map((item, index) => {
                     const lineTotal = getLineTotal(item);
-                    const is100ml = item.size?.toLowerCase().includes('100ml');
-                    const bundleActive = is100ml && item.quantity <= 3;
+                    const lineIs100ml = is100mlItem(item);
 
                     return (
                       <motion.div
@@ -131,21 +163,26 @@ export default function CartDrawer() {
                               <Trash2 size={14} />
                             </button>
                           </div>
-                          
+
                           {(item.color || item.size) && (
                             <p className="text-xs text-neutral-500 mt-1">
                               {[item.color, item.size].filter(Boolean).join(' / ')}
                             </p>
                           )}
-                          
+
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex flex-col">
                               <p className="text-base font-semibold text-gold-400">
                                 ${lineTotal.toFixed(2)}
                               </p>
-                              {bundleActive && item.quantity > 1 && (
+                              {lineIs100ml && bundleActive && (
                                 <span className="text-[10px] text-gold-400/70">
-                                  Bundle deal applied
+                                  Bundle price ${effective100mlUnitPrice.toFixed(2)}/unit
+                                </span>
+                              )}
+                              {lineIs100ml && !bundleActive && (
+                                <span className="text-[10px] text-neutral-500">
+                                  ${BASE_100ML_PRICE.toFixed(2)}/unit
                                 </span>
                               )}
                             </div>
@@ -167,14 +204,14 @@ export default function CartDrawer() {
                               </button>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-3 mt-2">
                             <button
                               onClick={() => handleToggleWishlist(item.product.id)}
                               className="flex items-center gap-1 text-xs text-neutral-500 hover:text-gold-400 transition-colors"
                             >
-                              <Heart 
-                                size={12} 
+                              <Heart
+                                size={12}
                                 className={isInWishlist(item.product.id) ? 'fill-gold-400 text-gold-400' : ''}
                               />
                               {isInWishlist(item.product.id) ? 'Saved' : 'Save'}
@@ -206,8 +243,21 @@ export default function CartDrawer() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-neutral-400">Subtotal</span>
-                    <span className="font-medium text-neutral-200">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-neutral-200">
+                      ${computedSubtotal.toFixed(2)}
+                    </span>
                   </div>
+
+                  {/* Show savings vs base price when the bundle is active */}
+                  {bundleActive && total100mlQty > 1 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gold-400/80">Bundle savings</span>
+                      <span className="text-gold-400/80">
+                        −${(BASE_100ML_PRICE * total100mlQty - computedSubtotal).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-neutral-400">Shipping</span>
                     <span className="text-sm text-neutral-400">
@@ -215,14 +265,16 @@ export default function CartDrawer() {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="border-t border-neutral-800 pt-4">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-medium text-neutral-200">Total</span>
-                    <span className="text-xl font-semibold text-gold-400">${(subtotal + shippingCost).toFixed(2)}</span>
+                    <span className="text-xl font-semibold text-gold-400">
+                      ${(computedSubtotal + shippingCost).toFixed(2)}
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <Link
                     to="/checkout"
