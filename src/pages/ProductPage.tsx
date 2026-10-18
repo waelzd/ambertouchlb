@@ -50,6 +50,8 @@ export default function ProductPage() {
         setLoading(true);
         setError(null);
 
+        console.log('Fetching product with slug:', slug);
+
         const { data: productData, error: productError } = await supabase
           .from('products')
           .select(`
@@ -75,11 +77,13 @@ export default function ProductPage() {
         }
 
         if (!productData) {
+          console.log('Product not found');
           setProduct(null);
           setLoading(false);
           return;
         }
 
+        console.log('Product fetched successfully:', productData);
         setProduct(productData as Product);
 
         const prodSizes: ProductSize[] = (productData as Product).sizes ?? [];
@@ -159,6 +163,7 @@ export default function ProductPage() {
           console.error('Related products error:', relatedError);
           setRelatedProducts([]);
         } else {
+          console.log('Related products fetched:', relatedData);
           setRelatedProducts((relatedData as Product[]) ?? []);
         }
       } catch (err) {
@@ -170,7 +175,7 @@ export default function ProductPage() {
     fetchProduct();
   }, [slug]);
 
-  // ── Meta Pixel: ViewContent ──
+  // ── Meta Pixel: ViewContent (fires when product is loaded / changes) ──
   useEffect(() => {
     if (!product) return;
     trackViewContent({
@@ -179,8 +184,10 @@ export default function ProductPage() {
       price: product.sale_price ?? product.price,
     });
   }, [product?.id]);
+  // ─────────────────────────────────────────────────────────────────────
 
   // ── Custom price calculation with 100ml bundle pricing ──────
+  // Bundle ONLY applies for qty 1, 2, 3. Once qty >= 4, normal price applies.
   const is100ml = selectedSize?.label.toLowerCase().includes('100ml') ?? false;
   const isBundleActive = is100ml && quantity >= 1 && quantity <= 3;
 
@@ -191,12 +198,14 @@ export default function ProductPage() {
       ? selectedSize.price
       : (product.sale_price ?? product.price);
 
+    // Special bundle pricing ONLY for the 100ml size AND qty 1-3
     if (isBundleActive) {
       if (quantity === 1) return 15;
-      if (quantity === 2) return 25 / 2;
-      if (quantity === 3) return 35 / 3;
+      if (quantity === 2) return 25 / 2; // 12.50 each => total 25
+      if (quantity === 3) return 35 / 3; // ≈11.67 each => total 35
     }
 
+    // Default: normal size price per unit
     return basePrice;
   };
 
@@ -212,6 +221,7 @@ export default function ProductPage() {
 
   const originalPrice = baseUnitPrice * quantity;
   const hasBundleDiscount = isBundleActive && displayPrice < originalPrice;
+  // ─────────────────────────────────────────────────────────────
 
   const images = product && product.image_urls
     ? product.image_urls.map(resolveImageUrl)
@@ -259,12 +269,18 @@ export default function ProductPage() {
     }
   };
 
-  if (!slug) return <Navigate to="/shop" replace />;
+  if (!slug) {
+    return <Navigate to="/shop" replace />;
+  }
 
   if (error) {
     return (
       <div className="min-h-screen pt-28 flex items-center justify-center text-center px-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <p className="font-serif text-3xl text-white/60 mb-4">Error loading product</p>
           <p className="text-sm text-neutral-500 mb-6">{error}</p>
           <Link to="/shop" className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-full font-medium hover:shadow-lg hover:shadow-gold-400/30 transition-all duration-300">
@@ -293,7 +309,11 @@ export default function ProductPage() {
 
   if (!product) return (
     <div className="min-h-screen pt-28 flex items-center justify-center text-center px-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <p className="font-serif text-3xl text-white/60 mb-4">Product not found</p>
         <Link to="/shop" className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 rounded-full font-medium hover:shadow-lg hover:shadow-gold-400/30 transition-all duration-300">
           Back to Shop
@@ -344,20 +364,29 @@ export default function ProductPage() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                   onClick={() => setZoomed(true)}
-                  onError={(e) => { e.currentTarget.src = ''; }}
+                  onError={(e) => {
+                    console.error('Image failed to load:', images[activeImage]);
+                    e.currentTarget.src = '';
+                  }}
                 />
               </AnimatePresence>
 
               {images.length > 1 && (
                 <>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setActiveImage(i => (i - 1 + images.length) % images.length); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImage(i => (i - 1 + images.length) % images.length);
+                    }}
                     className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
                   >
                     <ChevronLeft size={18} />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setActiveImage(i => (i + 1) % images.length); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImage(i => (i + 1) % images.length);
+                    }}
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
                   >
                     <ChevronRight size={18} />
@@ -366,7 +395,10 @@ export default function ProductPage() {
               )}
 
               <button
-                onClick={(e) => { e.stopPropagation(); setZoomed(true); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setZoomed(true);
+                }}
                 className="absolute top-4 right-4 w-10 h-10 bg-white/10 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 hover:scale-110"
               >
                 <ZoomIn size={16} />
@@ -389,8 +421,15 @@ export default function ProductPage() {
                   {images.map((_, i) => (
                     <button
                       key={i}
-                      onClick={(e) => { e.stopPropagation(); setActiveImage(i); }}
-                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeImage === i ? 'w-6 bg-gold-400' : 'bg-white/30 hover:bg-white/50'}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveImage(i);
+                      }}
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                        activeImage === i
+                          ? 'w-6 bg-gold-400'
+                          : 'bg-white/30 hover:bg-white/50'
+                      }`}
                     />
                   ))}
                 </div>
@@ -403,9 +442,20 @@ export default function ProductPage() {
                   <button
                     key={i}
                     onClick={() => setActiveImage(i)}
-                    className={`shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${activeImage === i ? 'border-gold-400 shadow-lg shadow-gold-400/20' : 'border-white/10 hover:border-white/30'}`}
+                    className={`shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                      activeImage === i
+                        ? 'border-gold-400 shadow-lg shadow-gold-400/20'
+                        : 'border-white/10 hover:border-white/30'
+                    }`}
                   >
-                    <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = ''; }} />
+                    <img
+                      src={url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '';
+                      }}
+                    />
                   </button>
                 ))}
               </div>
@@ -417,7 +467,10 @@ export default function ProductPage() {
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               {categoryArray.length > 0 ? (
                 categoryArray.slice(0, 2).map((cat: any, idx: number) => (
-                  <span key={cat.id || idx} className="text-[10px] font-medium tracking-[0.2em] uppercase text-gold-400">
+                  <span
+                    key={cat.id || idx}
+                    className="text-[10px] font-medium tracking-[0.2em] uppercase text-gold-400"
+                  >
                     {cat.name}
                     {idx < Math.min(categoryArray.length, 2) - 1 && ' / '}
                   </span>
@@ -433,9 +486,10 @@ export default function ProductPage() {
               {product.name}
             </h1>
 
-            {/* ── DYNAMIC PRICE DISPLAY ── */}
             <div className="flex items-center gap-3 mb-6 flex-wrap">
-              <span className={`text-2xl font-bold ${hasDiscount || hasBundleDiscount ? 'text-gold-400' : 'text-white'}`}>
+              <span className={`text-2xl font-bold ${
+                hasDiscount || hasBundleDiscount ? 'text-gold-400' : 'text-white'
+              }`}>
                 ${displayPrice.toFixed(2)}
               </span>
               {hasBundleDiscount && (
@@ -443,33 +497,48 @@ export default function ProductPage() {
                   ${originalPrice.toFixed(2)}
                 </span>
               )}
+              {!hasBundleDiscount && hasDiscount && !selectedSize && (
+                <span className="text-base text-white/40 line-through">
+                  ${(product.price * quantity).toFixed(2)}
+                </span>
+              )}
               {hasBundleDiscount && (
                 <span className="px-2.5 py-0.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] font-medium rounded-full">
                   Save ${(originalPrice - displayPrice).toFixed(2)}
                 </span>
               )}
+              {!hasBundleDiscount && hasDiscount && !selectedSize && (
+                <span className="px-2.5 py-0.5 bg-gold-400/10 border border-gold-400/20 text-gold-400 text-[10px] font-medium rounded-full">
+                  Save ${((product.price - product.sale_price!) * quantity).toFixed(2)}
+                </span>
+              )}
             </div>
 
             <div className="space-y-5">
-              {/* ── NEW SIZE SELECTOR MATCHING PICTURE ── */}
               {sizes.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  {sizes.map((s) => (
-                    <button
-                      key={s.label}
-                      onClick={() => {
-                        setSelectedSize(s);
-                        setQuantity(1); // Reset quantity on size change
-                      }}
-                      className={`py-3 px-4 text-sm font-medium rounded-full border transition-all duration-300 flex items-center justify-center ${
-                        selectedSize?.label === s.label
-                          ? 'bg-gold-400 text-neutral-900 border-gold-400 shadow-lg shadow-gold-400/20' 
-                          : 'bg-transparent text-neutral-400 border-neutral-700 hover:border-neutral-500 hover:text-white'
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/60">Choose Your Size</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {sizes.map((s) => (
+                      <button
+                        key={s.label}
+                        onClick={() => {
+                          setSelectedSize(s);
+                          setQuantity(1); // reset quantity when switching sizes
+                        }}
+                        className={`py-3 px-4 text-sm font-medium rounded-xl border transition-all duration-300 flex items-center justify-between ${
+                          selectedSize?.label === s.label
+                            ? 'bg-gold-400 text-neutral-900 border-gold-400 shadow-lg shadow-gold-400/20'
+                            : 'bg-white/5 text-white/70 border-white/10 hover:border-white/30 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="font-medium">{s.label}</span>
+                        <span className="font-bold">${s.price.toFixed(0)}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -496,6 +565,7 @@ export default function ProductPage() {
                   </p>
                 </div>
 
+                {/* Bundle hint for 100ml */}
                 {is100ml && (
                   <p className="text-[10px] text-gold-400/70 mt-2">
                     {quantity <= 3
@@ -509,7 +579,7 @@ export default function ProductPage() {
                 <button
                   onClick={handleAddToCart}
                   disabled={adding || product.stock_quantity === 0}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-medium tracking-widest uppercase rounded-full transition-all duration-300 ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-medium tracking-widest uppercase rounded-xl transition-all duration-300 ${
                     added
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
                       : 'bg-gradient-to-r from-gold-400 to-amber-500 text-neutral-900 hover:shadow-lg hover:shadow-gold-400/30 hover:scale-[1.02]'
@@ -522,7 +592,7 @@ export default function ProductPage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => authUser ? toggleWishlist(product.id) : navigate('/login')}
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all duration-300 ${
+                  className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all duration-300 ${
                     inWishlist
                       ? 'border-gold-400 bg-gold-400/10 text-gold-400 shadow-lg shadow-gold-400/20'
                       : 'border-white/10 text-white/60 hover:border-white/30 hover:bg-white/5'
@@ -534,7 +604,7 @@ export default function ProductPage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleShare}
-                  className="w-12 h-12 rounded-full border border-white/10 text-white/60 hover:border-white/30 hover:bg-white/5 transition-all duration-300 flex items-center justify-center"
+                  className="w-12 h-12 rounded-xl border border-white/10 text-white/60 hover:border-white/30 hover:bg-white/5 transition-all duration-300 flex items-center justify-center"
                 >
                   <Share2 size={18} />
                 </motion.button>
@@ -582,7 +652,10 @@ export default function ProductPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               className="absolute top-4 right-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300"
-              onClick={(e) => { e.stopPropagation(); setZoomed(false); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomed(false);
+              }}
             >
               <X size={20} />
             </motion.button>
@@ -593,7 +666,11 @@ export default function ProductPage() {
               className="max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <img src={images[activeImage]} alt={product.name} className="w-full h-full object-contain" />
+              <img
+                src={images[activeImage]}
+                alt={product.name}
+                className="w-full h-full object-contain"
+              />
             </motion.div>
           </motion.div>
         )}
