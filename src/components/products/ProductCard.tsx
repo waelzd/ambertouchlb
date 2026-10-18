@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
-import { Heart, Eye, Package } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Product } from '../../types';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 
 type Props = {
   product: Product;
@@ -14,53 +15,60 @@ type Props = {
 export default function ProductCard({ product, index = 0 }: Props) {
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { authUser } = useAuth();
+  const { addItem } = useCart();
   const navigate = useNavigate();
+  
   const inWishlist = isInWishlist(product.id);
-  const displayPrice = product.sale_price ?? product.price;
-  const hasDiscount = product.sale_price !== null;
+  const sizes = product.sizes || [];
+
+  // State to track which size is currently selected on the card
+  const [selectedSize, setSelectedSize] = useState(
+    sizes.length > 0 ? sizes[0] : null
+  );
+
+  // Determine current price based on selected size (or fallback to base product price)
+  const currentPrice = selectedSize 
+    ? (selectedSize.sale_price ?? selectedSize.price) 
+    : (product.sale_price ?? product.price);
+
+  const basePrice = selectedSize 
+    ? selectedSize.price 
+    : product.price;
+
+  const hasDiscount = currentPrice < basePrice;
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!authUser) { navigate('/login'); return; }
     toggleWishlist(product.id);
   };
 
-  // Parse sizes from product.sizes (assuming it's a JSON field)
-  const sizes = product.sizes || [];
-
-  // Use slug for URL, fallback to name if slug doesn't exist
-  const productSlug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-  // Handle categories - could be array or single object
-  const getCategories = () => {
-    const categories = (product as any).categories;
-    
-    // If categories is an array
-    if (Array.isArray(categories)) {
-      return categories;
-    }
-    
-    // If categories is a single object
-    if (categories && typeof categories === 'object') {
-      return [categories];
-    }
-    
-    return [];
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Add item with the currently selected size
+    addItem(
+      product, 
+      undefined, 
+      selectedSize?.label ?? undefined, 
+      currentPrice, 
+      1
+    );
   };
 
-  const categories = getCategories();
-  //const primaryCategory = categories.length > 0 ? categories[0] : null;
+  const productSlug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.4 }}
-      className="group"
+      className="group flex flex-col"
     >
       <Link to={`/product/${productSlug}`} className="block">
-        {/* Image */}
-        <div className="relative aspect-[3/4] bg-neutral-800 overflow-hidden rounded-lg">
+        {/* Image Container */}
+        <div className="relative aspect-[3/4] bg-[#2a2532] overflow-hidden rounded-2xl">
           <img
             src={product.image_urls[0]}
             alt={product.name}
@@ -78,134 +86,82 @@ export default function ProductCard({ product, index = 0 }: Props) {
             />
           )}
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-            {hasDiscount && (
-              <span className="px-3 py-1 bg-gold-400 text-neutral-900 text-xs font-medium tracking-wider uppercase rounded-full">
-                Sale
-              </span>
-            )}
-          </div>
-
-          {/* Quick actions */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button
-              onClick={handleWishlist}
-              className={`w-9 h-9 flex items-center justify-center bg-neutral-900/80 backdrop-blur-sm rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
-                inWishlist ? 'text-gold-400' : 'text-neutral-400 hover:text-gold-400'
-              }`}
-              aria-label="Add to wishlist"
-            >
-              <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} />
-            </button>
-          </div>
-
-          {/* Show Product Button */}
-          <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out px-3 pb-3">
-            <Link
-              to={`/product/${productSlug}`}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-gold-400 text-neutral-900 rounded-lg font-medium text-sm transition-all duration-300 hover:bg-gold-300 active:scale-[0.98] shadow-lg shadow-gold-400/20 hover:shadow-gold-400/30"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Eye size={16} />
-              Show Product
-            </Link>
-          </div>
+          {/* Wishlist Button */}
+          <button
+            onClick={handleWishlist}
+            className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center bg-[#1c1823]/80 backdrop-blur-md rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
+              inWishlist ? 'text-gold-400' : 'text-neutral-400 hover:text-gold-400'
+            }`}
+          >
+            <Heart size={18} fill={inWishlist ? 'currentColor' : 'none'} />
+          </button>
 
           {/* Out of stock overlay */}
           {product.stock_quantity === 0 && (
-            <div className="absolute inset-0 bg-neutral-900/70 backdrop-blur-sm flex items-center justify-center">
+            <div className="absolute inset-0 bg-[#1c1823]/70 backdrop-blur-sm flex items-center justify-center">
               <span className="text-xs font-medium tracking-widest uppercase text-neutral-400 border border-neutral-700 px-4 py-2 rounded-full">
                 Out of Stock
               </span>
             </div>
           )}
         </div>
+      </Link>
 
-        {/* Info */}
-        <div className="pt-4 space-y-1.5">
-          {/* Category - Display first category or multiple */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {categories.length > 0 ? (
-              categories.slice(0, 2).map((cat: any, idx: number) => (
-                <span 
-                  key={cat.id || idx}
-                  className="text-[10px] font-medium tracking-wider uppercase text-gold-400"
-                >
-                  {cat.name}
-                  {idx < Math.min(categories.length, 2) - 1 && ' • '}
-                </span>
-              ))
-            ) : (
-              <span className="text-[10px] font-medium tracking-wider uppercase text-neutral-500">
-                Uncategorized
-              </span>
-            )}
-            {categories.length > 2 && (
-              <span className="text-[10px] font-medium tracking-wider uppercase text-gold-400/60">
-                +{categories.length - 2}
-              </span>
-            )}
-          </div>
-
-          {/* Product Name */}
-          <h3 className="font-serif text-xl font-light text-neutral-200 group-hover:text-gold-400 transition-colors line-clamp-2">
+      {/* Info Section */}
+      <div className="pt-4 flex-1 flex flex-col">
+        {/* Title & Brand */}
+        <div className="mb-1">
+          <h3 className="font-serif text-lg font-medium text-white leading-tight">
             {product.name}
           </h3>
-          
-          {/* Sizes with Prices */}
-          {sizes.length > 0 && (
-            <div className="mt-2.5">
-              <p className="text-[10px] font-medium tracking-wider uppercase text-neutral-500 mb-1.5 flex items-center gap-1.5">
-                <Package size={12} />
-                Available Sizes
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((size: any, idx: number) => {
-                  const hasSizeDiscount = size.sale_price !== null && size.sale_price !== undefined;
-                  const sizePrice = size.sale_price ?? size.price;
+          {/* Optional: Add brand or subtitle here if you have it in your DB */}
+          <p className="text-xs text-gold-400 mt-0.5">For Him</p>
+        </div>
 
-                  return (
-                    <div
-                      key={idx}
-                      title={`Price for ${size.label}: $${sizePrice.toFixed(2)}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-800/50 rounded-lg border border-neutral-700 hover:border-gold-400/50 transition-colors duration-200"
-                    >
-                      <span className="text-xs font-semibold text-neutral-200">{size.label}</span>
-                      <span className="text-neutral-600">•</span>
-                      <span className="text-xs font-bold text-gold-400">
-                        ${sizePrice.toFixed(2)}
-                      </span>
-                      {hasSizeDiscount && (
-                        <span className="text-[10px] text-neutral-500 line-through">
-                          ${size.price.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          
-          {/* Fallback price if no sizes */}
-          {sizes.length === 0 && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`text-sm font-semibold ${hasDiscount ? 'text-gold-400' : 'text-neutral-200'}`}>
-                ${displayPrice.toFixed(2)}
-              </span>
-              {hasDiscount && (
-                <span className="text-sm text-neutral-500 line-through">${product.price.toFixed(2)}</span>
-              )}
-              {(product as any).size && (
-                <span className="text-[10px] text-neutral-500 uppercase tracking-wider">
-                  / {(product as any).size}
-                </span>
-              )}
-            </div>
+        {/* Price */}
+        <div className="mt-3 mb-4 flex items-baseline gap-2">
+          <span className={`text-xl font-bold ${hasDiscount ? 'text-gold-400' : 'text-white'}`}>
+            ${currentPrice.toFixed(0)}
+          </span>
+          {hasDiscount && (
+            <span className="text-sm text-neutral-500 line-through">
+              ${basePrice.toFixed(0)}
+            </span>
           )}
         </div>
-      </Link>
+
+        {/* Size Selector (Pills) */}
+        {sizes.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 mb-4 mt-auto">
+            {sizes.map((s) => (
+              <button
+                key={s.label}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedSize(s);
+                }}
+                className={`py-2 text-xs font-medium rounded-full border transition-all duration-300 ${
+                  selectedSize?.label === s.label
+                    ? 'bg-gold-400 text-[#1c1823] border-gold-400'
+                    : 'bg-transparent text-neutral-400 border-neutral-700 hover:border-neutral-500'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Add to Cart Button */}
+        <button
+          onClick={handleAddToCart}
+          disabled={product.stock_quantity === 0}
+          className="w-full py-3 bg-[#eed08f] text-[#1c1823] text-sm font-semibold rounded-full hover:bg-[#f4db9e] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          Add +
+        </button>
+      </div>
     </motion.div>
   );
 }
