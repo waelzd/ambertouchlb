@@ -10,28 +10,62 @@ import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
 // Base 100ml price when bundle offer does NOT apply (qty >= 4)
 const BASE_100ML_PRICE = 15;
 
-// ── Bundle-aware line total (mirrors CartContext / CartDrawer) ──
-function getLineTotal(item: {
-  size?: string;
+// Bundle tiers for 100ml (applied across ALL 100ml items combined)
+const BUNDLE_TIERS: Record<number, number> = {
+  1: 15,
+  2: 25,
+  3: 35,
+};
+
+// ── Pricing helpers (cross-product bundle) ─────────────────────
+type CartLine = {
+  size?: string | null;
   price: number;
   quantity: number;
-}): number {
-  const is100ml = item.size?.toLowerCase().includes('100ml') ?? false;
+};
 
-  if (is100ml) {
-    if (item.quantity === 1) return 15;
-    if (item.quantity === 2) return 25;
-    if (item.quantity === 3) return 35;
-    // qty 4+ → bundle removed, base 100ml price × qty
-    return BASE_100ML_PRICE * item.quantity;
+const is100mlLine = (item: CartLine) =>
+  item.size?.toLowerCase().includes('100ml') ?? false;
+
+// Total 100ml quantity across the whole cart
+const getTotal100mlQty = (items: CartLine[]): number =>
+  items.reduce((sum, item) => (is100mlLine(item) ? sum + item.quantity : sum), 0);
+
+// Per-unit 100ml price given the TOTAL 100ml qty across the cart
+const get100mlUnitPrice = (total100mlQty: number): number => {
+  if (total100mlQty >= 1 && total100mlQty <= 3) {
+    return BUNDLE_TIERS[total100mlQty] / total100mlQty;
   }
+  return BASE_100ML_PRICE;
+};
 
-  return item.price * item.quantity;
-}
+// Build a line-total resolver bound to the current cart
+const makeLineTotalResolver = (items: CartLine[]) => {
+  const total100mlQty = getTotal100mlQty(items);
+  const unitPrice = get100mlUnitPrice(total100mlQty);
+  const bundleActive = total100mlQty >= 1 && total100mlQty <= 3;
+
+  return {
+    total100mlQty,
+    bundleActive,
+    unitPrice,
+    getLineTotal: (item: CartLine): number =>
+      is100mlLine(item)
+        ? unitPrice * item.quantity
+        : item.price * item.quantity,
+    getSubtotal: (): number =>
+      items.reduce(
+        (sum, item) =>
+          sum +
+          (is100mlLine(item) ? unitPrice * item.quantity : item.price * item.quantity),
+        0
+      ),
+  };
+};
 // ──────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, clearCart } = useCart();
   const { authUser, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -64,10 +98,17 @@ export default function CheckoutPage() {
 
   const shippingCost = 4;
 
+  // ── Bundle-aware pricing for the whole cart ──
+  const pricing = makeLineTotalResolver(
+    items.map(i => ({ size: i.size, price: i.price, quantity: i.quantity }))
+  );
+  const computedSubtotal = pricing.getSubtotal();
+  // ─────────────────────────────────────────────
+
   // First-order 10% discount
   const isDiscountEligible = !!profile && !profile.has_used_signup_discount;
-  const discountAmount = isDiscountEligible ? subtotal * 0.1 : 0;
-  const total = subtotal - discountAmount + shippingCost;
+  const discountAmount = isDiscountEligible ? computedSubtotal * 0.1 : 0;
+  const total = computedSubtotal - discountAmount + shippingCost;
 
   // ── Meta Pixel: InitiateCheckout (fires once when the user lands here with items) ──
   const hasTrackedCheckout = useRef(false);
@@ -386,6 +427,13 @@ export default function CheckoutPage() {
         }
       }
 
+      // ── Recompute the bundle-aware subtotal from the current cart ──
+      const orderPricing = makeLineTotalResolver(
+        items.map(i => ({ size: i.size, price: i.price, quantity: i.quantity }))
+      );
+      const orderSubtotal = orderPricing.getSubtotal();
+      // ──────────────────────────────────────────────────────────────
+
       let appliedDiscount = 0;
       if (authUser) {
         const { data: freshProfile, error: profileError } = await supabase
@@ -395,10 +443,10 @@ export default function CheckoutPage() {
           .single();
 
         if (!profileError && freshProfile && !freshProfile.has_used_signup_discount) {
-          appliedDiscount = subtotal * 0.1;
+          appliedDiscount = orderSubtotal * 0.1;
         }
       }
-      const finalTotal = subtotal - appliedDiscount + shippingCost;
+      const finalTotal = orderSubtotal - appliedDiscount + shippingCost;
 
       const orderData: any = {
         user_id: authUser.id,
@@ -419,7 +467,7 @@ export default function CheckoutPage() {
 
       // ── Save order items with bundle-aware per-unit prices ──
       const orderItems = items.map(item => {
-        const lineTotal = getLineTotal({
+        const lineTotal = orderPricing.getLineTotal({
           size: item.size,
           price: item.price,
           quantity: item.quantity,
@@ -485,25 +533,23 @@ export default function CheckoutPage() {
 
       // ── Email items HTML using bundle-aware line totals ──
       const itemsHtml = items
-        .map(
-          item => {
-            const lineTotal = getLineTotal({
-              size: item.size,
-              price: item.price,
-              quantity: item.quantity,
-            });
-            return `
-              <tr>
-                <td style="padding:8px;border-bottom:1px solid #eee">
-                  ${item.product.name}${item.size ? ` (${item.size})` : ''}
-                </td>
-                <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">×${item.quantity}</td>
-                <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">
-                  $${lineTotal.toFixed(2)}
-                </td>
-              </tr>`;
-          }
-        )
+        .map(item => {
+          const lineTotal = orderPricing.getLineTotal({
+            size: item.size,
+            price: item.price,
+            quantity: item.quantity,
+          });
+          return `
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid #eee">
+                ${item.product.name}${item.size ? ` (${item.size})` : ''}
+              </td>
+              <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">×${item.quantity}</td>
+              <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">
+                $${lineTotal.toFixed(2)}
+              </td>
+            </tr>`;
+        })
         .join('');
       // ────────────────────────────────────────────────────
 
@@ -522,7 +568,7 @@ export default function CheckoutPage() {
           orderRef,
           shipping,
           itemsHtml,
-          subtotal: subtotal.toFixed(2),
+          subtotal: orderSubtotal.toFixed(2),
           discount: appliedDiscount.toFixed(2),
           shippingCost: shippingCost.toFixed(2),
           total: finalTotal.toFixed(2),
@@ -908,17 +954,23 @@ export default function CheckoutPage() {
                 <h2 className="font-serif text-xl font-light text-white">Order Summary</h2>
               </div>
 
+              {/* Bundle banner */}
+              {pricing.bundleActive && pricing.total100mlQty > 1 && (
+                <div className="mb-4 rounded-xl border border-gold-400/30 bg-gold-400/5 px-3 py-2 text-xs text-gold-400">
+                  🎉 Bundle deal applied across {pricing.total100mlQty} × 100ml items
+                </div>
+              )}
+
               <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 {items.map(item => {
-                  // ── Bundle-aware line total ──
-                  const lineTotal = getLineTotal({
+                  // ── Bundle-aware line total (shared across cart) ──
+                  const lineTotal = pricing.getLineTotal({
                     size: item.size,
                     price: item.price,
                     quantity: item.quantity,
                   });
-                  const is100ml = item.size?.toLowerCase().includes('100ml') ?? false;
-                  const bundleActive = is100ml && item.quantity <= 3;
-                  // ─────────────────────────────
+                  const lineIs100ml = item.size?.toLowerCase().includes('100ml') ?? false;
+                  // ─────────────────────────────────────────────────
 
                   return (
                     <div key={item.id} className="flex gap-3 bg-white/5 rounded-lg p-3 border border-white/5">
@@ -934,8 +986,10 @@ export default function CheckoutPage() {
                               {item.size}
                             </span>
                           )}
-                          {bundleActive && item.quantity > 1 && (
-                            <span className="text-[10px] text-gold-400/70">Bundle deal</span>
+                          {lineIs100ml && pricing.bundleActive && (
+                            <span className="text-[10px] text-gold-400/70">
+                              ${pricing.unitPrice.toFixed(2)}/unit
+                            </span>
                           )}
                         </div>
                       </div>
@@ -952,8 +1006,23 @@ export default function CheckoutPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Subtotal</span>
-                  <span className="text-white">${subtotal.toFixed(2)}</span>
+                  <span className="text-white">${computedSubtotal.toFixed(2)}</span>
                 </div>
+
+                {/* Bundle savings row */}
+                {pricing.bundleActive && pricing.total100mlQty > 1 && (
+                  <div className="flex justify-between text-gold-400">
+                    <span>Bundle savings</span>
+                    <span>
+                      −$
+                      {(
+                        BASE_100ML_PRICE * pricing.total100mlQty -
+                        computedSubtotal
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
                 {isDiscountEligible && (
                   <div className="flex justify-between text-gold-400">
                     <span>First order discount (10%)</span>
