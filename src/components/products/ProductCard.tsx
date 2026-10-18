@@ -159,8 +159,8 @@ export default function ProductCard({ product, index = 0 }: Props) {
           disabled={product.stock_quantity === 0}
           className="w-full py-3 bg-[#eed08f] text-[#1c1823] text-sm font-semibold rounded-full hover:bg-[#f4db9e] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          Add +
-        </button>
+          Add to Cart       
+       </button>
       </div>
     </motion.div>
   );
